@@ -41,18 +41,24 @@ typedef struct _ecore_internal
 
 	void* backend;
 
-	char err[ECORE_MAX_ERR_LEN];
 } ecore_internal_t;
 
 
 typedef struct _ecore_io_internal {
+	union {
 	HANDLE file;
+	socket_type sock;
+	} io_handle;
+#define io_sock io_handle.sock
+#define io_file io_handle.file
+
 	int type;
 
-#define ecore_io_type_tcp_listen   1
-#define ecore_io_type_tcp_accept   2
-#define	ecore_io_type_ipc   3
-#define	ecore_io_type_file  4
+#define ecore_io_type_tcp_listen      1
+#define ecore_io_type_tcp_accepted    2
+#define ecore_io_type_tcp_connected   3
+#define	ecore_io_type_ipc             4
+#define	ecore_io_type_file            5
 
 } ecore_io_internal_t;
 

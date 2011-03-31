@@ -50,32 +50,32 @@ DLL_VARIABLE void string_finalize(string_t* pcs);
 //
 //DLL_VARIABLE void string_free(string_t* pcs);
 
-DLL_VARIABLE void string_create(string_t* pcs, const char* s);
+DLL_VARIABLE string_t* string_create(string_t* pcs, const char* s);
 
-DLL_VARIABLE void string_createLen(string_t* pcs, const char* s, size_t len);
+DLL_VARIABLE string_t* string_createLen(string_t* pcs, const char* s, size_t len);
 
-DLL_VARIABLE void string_createN(string_t* pcs, char ch, size_t n);
+DLL_VARIABLE string_t* string_createN(string_t* pcs, char ch, size_t n);
 
-DLL_VARIABLE void string_create_printf(string_t* pcs, const char* fmt, ...);
+DLL_VARIABLE string_t* string_sprintf(string_t* pcs, const char* fmt, ...);
 
-DLL_VARIABLE void string_create_vprintf(string_t* pcs, const char* fmt, va_list argList);
+DLL_VARIABLE string_t* string_vsprintf(string_t* pcs, const char* fmt, va_list argList);
 
-DLL_VARIABLE void string_append_printf(string_t* pcs, const char* fmt, ...);
+DLL_VARIABLE string_t* string_append_printf(string_t* pcs, const char* fmt, ...);
 
-DLL_VARIABLE void string_append_vprintf(string_t* pcs, const char* fmt, va_list argList);
+DLL_VARIABLE string_t* string_append_vprintf(string_t* pcs, const char* fmt, va_list argList);
 
-DLL_VARIABLE void string_assign(string_t* pcs, const char* s );
+DLL_VARIABLE string_t* string_assign(string_t* pcs, const char* s );
 
-DLL_VARIABLE void string_assignLen(string_t* pcs, const char* s, size_t cch);
+DLL_VARIABLE string_t* string_assignLen(string_t* pcs, const char* s, size_t cch);
 
 //DLL_VARIABLE string_t* string_copy(const string_t* pcs);
-DLL_VARIABLE void string_copy(string_t* dst, const string_t* src);
+DLL_VARIABLE string_t* string_copy(string_t* dst, const string_t* src);
 
-DLL_VARIABLE void string_append(string_t* pcs, const char* s);
+DLL_VARIABLE string_t* string_append(string_t* pcs, const char* s);
 
-DLL_VARIABLE void string_appendLen(string_t* pcs, const char* s, size_t cch);
+DLL_VARIABLE string_t* string_appendLen(string_t* pcs, const char* s, size_t cch);
 
-DLL_VARIABLE void string_truncate(string_t* pcs, size_t len);
+DLL_VARIABLE string_t* string_truncate(string_t* pcs, size_t len);
 
 DLL_VARIABLE void string_swap(string_t* pcs1, string_t* pcs2);
 
