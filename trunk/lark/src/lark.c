@@ -3,7 +3,6 @@
 
 #include "ecore.h"
 
-ecore_t* core = NULL;
 
 void clientHandler(ecore_io_t* client)
 {
@@ -39,7 +38,7 @@ void acceptHandler(ecore_io_t* listen_io)
 			break;
 		}
 
-		if(0 != ecore_start_thread(core, &clientHandler, client))
+		if(0 != ecore_start_thread(listen_io->core, &clientHandler, client))
 		{
 			printf(listen_io->core->error.ptr);
 			break;
@@ -71,10 +70,14 @@ int main(int argc, char* argv[])
 
 	while(core.is_running)
 	{
-		if(0 != ecore_poll(&core, 1000))
+		int ret = ecore_poll(&core, 1000);
+		if(0 != ret)
 		{
-			printf(core.error.ptr);
-			break;
+			if(ret != 1)
+			{
+				printf(core.error.ptr);
+				break;
+			}
 		}
 	}
 	

@@ -45,7 +45,10 @@ static void string_ensureLen_(string_t* pcs, size_t len)
 	if (capacity < pcs->capacity * 2)
 		capacity = pcs->capacity * 2;
 
-	newPtr = (char*)my_realloc(pcs->ptr, capacity + 1);
+	if(0 == pcs->ptr)
+		newPtr = (char*)my_malloc(capacity + 1);
+	else
+		newPtr = (char*)my_realloc(pcs->ptr, capacity + 1);
 
 	pcs->ptr = newPtr;
 	pcs->ptr[pcs->len]  =   '\0';
@@ -181,6 +184,7 @@ DLL_VARIABLE string_t* string_createLen(string_t* pcs, const char* s
 	if(0 != s)
 		strncpy(pcs->ptr, s, len);
 	pcs->ptr[len]   =   '\0';
+	pcs->len = len;
 	return pcs;
 }
 
