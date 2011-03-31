@@ -144,10 +144,10 @@ void  backend_cleanup(ecore_t* core){
 	internal->backend = NULL;
 }
 
-int _parse_ip_address(ecore_t* core, struct sockaddr* addr, const char* addr_and_port)
+int _parse_ip_address(ecore_t* core, struct sockaddr* addr, const char* url)
 {
 	char host[50];
-	const char* ptr = addr_and_port;
+	const char* ptr = url;
 
 	if('[' == *ptr)
 	{
@@ -156,13 +156,13 @@ int _parse_ip_address(ecore_t* core, struct sockaddr* addr, const char* addr_and
 
 		if(NULL == (end = strchr(++ptr, ']')))
 		{
-			_set_last_error(core, "tcp 的 url 格式不正确, 找不到符号 ']' - %s", addr_and_port);
+			_set_last_error(core, "tcp 的 url 格式不正确, 找不到符号 ']' - %s", url);
 			return -1;
 		}
 
 		if( ':' != *(end + 1))
 		{
-			_set_last_error(core, "tcp 的 url 格式不正确, 找不到符号 ':' - %s", addr_and_port);
+			_set_last_error(core, "tcp 的 url 格式不正确, 找不到符号 ':' - %s", url);
 			return -1;
 		}
 
@@ -170,7 +170,7 @@ int _parse_ip_address(ecore_t* core, struct sockaddr* addr, const char* addr_and
 		strncpy(host, ptr, end-ptr);
 		if(1 != inet_pton(AF_INET6, host, &(((struct sockaddr_in6*)addr)->sin6_addr)))
 		{
-			_set_last_error(core, "tcp 的 url 格式不正确, %s - %s", _last_win_error(), addr_and_port);
+			_set_last_error(core, "tcp 的 url 格式不正确, %s - %s", _last_win_error(), url);
 			return -1;
 		}
 
@@ -186,14 +186,14 @@ int _parse_ip_address(ecore_t* core, struct sockaddr* addr, const char* addr_and
 
 		if(NULL == (end = strchr(ptr, ':')))
 		{
-			_set_last_error(core, "tcp 的 url 格式不正确, 找不到符号 ':' - %s", addr_and_port);
+			_set_last_error(core, "tcp 的 url 格式不正确, 找不到符号 ':' - %s", url);
 			return -1;
 		}
 
 		strncpy(host, ptr, end-ptr);
 		if(1 != inet_pton(AF_INET, host, &(((struct sockaddr_in*)addr)->sin_addr)))
 		{
-			_set_last_error(core, "tcp 的 url 格式不正确, %s - %s", _last_win_error(), addr_and_port);
+			_set_last_error(core, "tcp 的 url 格式不正确, %s - %s", _last_win_error(), url);
 			return -1;
 		}
 
@@ -203,93 +203,85 @@ int _parse_ip_address(ecore_t* core, struct sockaddr* addr, const char* addr_and
 		return 0;
 	}
 }
-ecore_io_t* _create_tcp(ecore_t* core, const char* url)
+bool _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
 {
 	struct sockaddr addr;
-	ecore_io_t* io = NULL;
 	ecore_io_internal_t* internal = NULL;
 	socket_type sock;
 
 	if(0 != _parse_ip_address(core, &addr, url))
-		return NULL;
+		return false;
 
 	sock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if(INVALID_SOCKET == sock)
 	{
 		_set_last_error(core, "创建 socket 失败, - %s", _last_win_error());
-		return NULL;
+		return false;
 	}
 
 	if(SOCKET_ERROR == bind(sock, &addr, sizeof(struct sockaddr)))
 	{
-		_set_last_error(core, "将 socket 绑定到 '%s' 上时失败, - %s", addr_and_port, _last_win_error());
+		_set_last_error(core, "将 socket 绑定到 '%s' 上时失败, - %s", url, _last_win_error());
 		closesocket(sock);
-		return NULL;
+		return false;
 	}
 
 	if(SOCKET_ERROR == listen(sock, SOMAXCONN))
 	{
-		_set_last_error(core, "将 socket[%s] 置为监时时失败, - %s", addr_and_port, _last_win_error());
+		_set_last_error(core, "将 socket[%s] 置为监时时失败, - %s", url, _last_win_error());
 		closesocket(sock);
-		return NULL;
+		return false;
 	}
 
 	internal = (ecore_io_internal_t*)my_malloc(sizeof(ecore_io_internal_t));
 	internal->file = (HANDLE)sock;
-	internal->type = ecore_io_type_tcp;
+	internal->type = ecore_io_type_tcp_listen;
 
-	io = (ecore_io_t*)my_malloc(sizeof(ecore_io_t));
 	io->core = core;
 	io->internal = internal;
-	string_create_sprintf(&io->name,"listen[socket=%d, address=%s]",  (int)internal->file, url);
+	string_create_printf(&io->name, "listen[socket=%d, address=%s]",  (int)internal->file, url);
 	string_create(&io->local_address,url);
 	string_copy(&io->remote_address,&io->local_address);
 
-	return io;
+	return true;
 }
 
-ecore_io_t* _create_ipc(ecore_t* core, const char* addr)
+bool _create_ipc(ecore_t* core, ecore_io_t* io, const char* addr)
 {
-	return NULL;
+	return false;
 }
 
-DLL_VARIABLE ecore_io_t* ecore_io_listion_at(ecore_t* core, const string_t* str)
+DLL_VARIABLE bool ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* str)
 {
 	if(0 == strncasecmp("tcp://", string_data(str), 6))
-		return _create_tcp(core, string_data(str) + 6);
+		return _create_listen_tcp(core, io, string_data(str) + 6);
 	else if(0 == strncasecmp("ipc://", string_data(str), 6))
-		return _create_ipc(core, string_data(str) + 6);
-	return NULL;
+		return _create_ipc(core, io, string_data(str) + 6);
+	return false;
 }
 
-DLL_VARIABLE ecore_io_t* ecore_io_accept(ecore_io_t* io)
+DLL_VARIABLE bool ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io)
 {
 	iocp_command_t command;
 	socket_type accepted;
-
-    string_t local_addr_s = STRING_T_DEFAULT;
-    string_t remote_addr_s = STRING_T_DEFAULT;
 
 	char data_buf[ sizeof(SOCKADDR_STORAGE)*2 + sizeof(SOCKADDR_STORAGE)*2 + 100];
 	DWORD bytesTransferred;
 
 
-
-
-
-	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
+	ecore_io_internal_t* internal = (ecore_io_internal_t*)listen_io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
 
 
 	accepted = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if(INVALID_SOCKET == accepted)
 	{
-		_set_last_error(io->core, "创建 socket 失败, - %s", _last_win_error());
+		_set_last_error(listen_io->core, "创建 socket 失败, - %s", _last_win_error());
 		return 0;
 	}
 
 	if(!acceptEx(internal->file
-			, accepted,
+			, accepted
 			, data_buf
             , 0 //必须为0,否则会有大量的连接处于accept中，因为客户端可能故意只
                 //建立连接，没有发送数据。
@@ -299,18 +291,18 @@ DLL_VARIABLE ecore_io_t* ecore_io_accept(ecore_io_t* io)
             , &command.invocation)
       && WSA_IO_PENDING != WSAGetLastError())
 	{
-		_set_last_error(io->core, "接受器 '%s' 发起连接请求失败 - %s"
-				, string_data(io->name)
+		_set_last_error(listen_io->core, "接受器 '%s' 发起连接请求失败 - %s"
+				, string_data(&listen_io->name)
 				, _last_win_error());
 		goto err;
 	}
 
-	_ecore_wait(io->core, &command.context);
+	_ecore_wait(listen_io->core, &command.context);
 
 	if (0 != command.result_error)
 	{
-		_set_last_error(io->core, "接受器 '%s' 获取连接请求失败 - %s"
-				, string_data(io->name)
+		_set_last_error(listen_io->core, "接受器 '%s' 获取连接请求失败 - %s"
+				, string_data(&listen_io->name)
 				, _last_win_error_with_code(command.result_error));
 		goto err;
 	}
@@ -318,14 +310,14 @@ DLL_VARIABLE ecore_io_t* ecore_io_accept(ecore_io_t* io)
 
 
 	{
-		sockaddr *local_addr = 0;
-		sockaddr *remote_addr = 0;
+		struct sockaddr *local_addr = 0;
+		struct sockaddr *remote_addr = 0;
 		int local_size = 0;
 		int remote_size = 0;
 
 		/// 超级奇怪!如果直接用 GetAcceptExSockaddrs 会失败,通过调
 		/// 用 GetAcceptExSockaddrs 的函数指针就没有问题.
-		getAcceptExSockaddrs(ptr_
+		getAcceptExSockaddrs(data_buf
 						   , 0
 						   , sizeof(SOCKADDR_STORAGE) + sizeof(SOCKADDR_STORAGE)
 						   , sizeof(SOCKADDR_STORAGE) + sizeof(SOCKADDR_STORAGE)
@@ -338,10 +330,10 @@ DLL_VARIABLE ecore_io_t* ecore_io_accept(ecore_io_t* io)
 				, remote_size
 				, NULL
 				, 0
-				, &remote_addr_s))
+				, &listen_io->remote_address))
 		{
-			_set_last_error(io->core, "接受器 '%s' 获取连接请求返回,获取远程地址失败 - %s"
-					, string_data(io->name)
+			_set_last_error(listen_io->core, "接受器 '%s' 获取连接请求返回,获取远程地址失败 - %s"
+					, string_data(&listen_io->name)
 					, _last_win_error());
 			goto err;
 		}
@@ -350,22 +342,21 @@ DLL_VARIABLE ecore_io_t* ecore_io_accept(ecore_io_t* io)
 				, local_size
 				, NULL
 				, 0
-				, &local_addr_s
-				, local_addr_s))
+				, &listen_io->local_address))
 		{
-			_set_last_error(io->core, "接受器 '%s' 获取连接请求返回,获取本地地址失败 - %s"
-					, string_data(io->name)
+			_set_last_error(listen_io->core, "接受器 '%s' 获取连接请求返回,获取本地地址失败 - %s"
+					, string_data(&listen_io->name)
 					, _last_win_error());
 			goto err;
 		}
 	}
 
 
-     if (SOCKET_ERROR == setsockopt(socket_, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT,
+     if (SOCKET_ERROR == setsockopt(accepted, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT,
                                     (char *) &(internal->file), sizeof(internal->file)))
      {
-			_set_last_error(io->core, "接受器 '%s' 获取连接请求返回,在对 socket 句柄设置 SO_UPDATE_ACCEPT_CONTEXT 选项时发生错误 - "
-					, string_data(io->name)
+			_set_last_error(listen_io->core, "接受器 '%s' 获取连接请求返回,在对 socket 句柄设置 SO_UPDATE_ACCEPT_CONTEXT 选项时发生错误 - "
+					, string_data(&listen_io->name)
 					, _last_win_error());
 			goto err;
      }
@@ -373,8 +364,6 @@ DLL_VARIABLE ecore_io_t* ecore_io_accept(ecore_io_t* io)
 
 err:
 	closesocket(accepted);
-	string_finalize(local_addr_s);
-	string_finalize(remote_addr_s);
 	return -1;
 }
 
@@ -400,7 +389,9 @@ DLL_VARIABLE void ecore_io_close(ecore_io_t* io)
 	}
 
 	my_free(internal);
-	string_finalize(&(io->address));
+	string_finalize(&io->name);
+	string_finalize(&io->local_address);
+	string_finalize(&io->remote_address);
 	my_free(io);
 }
 
@@ -413,7 +404,7 @@ DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, u
 	if( WriteFileEx(internal->file
 		, buf
 		, len
-		, &(command.invocation))
+		, &command.invocation
 		, NULL))
 	{
 		_ecore_wait(io->core, &command.context);
@@ -424,16 +415,17 @@ DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, u
 
 DLL_VARIABLE bool ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len)
 {
+	const char* ptr = (const char*)buf;
 	do
 	{
-		unsigned int n = ecore_io_write_some(io, buf, len);
+		unsigned int n = ecore_io_write_some(io, ptr, len);
 	    if (-1 == n)
 	        return false;
 
 	    assert( n <= len );
 
 	    len -= n;
-	    buf += n;
+	    ptr += n;
 	}
 	while (0 == len);
 
@@ -460,16 +452,17 @@ DLL_VARIABLE unsigned int ecore_io_read_some(ecore_io_t* io, void* buf, unsigned
 
 DLL_VARIABLE bool ecore_io_read(ecore_io_t* io, void* buf, unsigned int len)
 {
+	const char* ptr = (const char*)buf;
 	do
 	{
-		unsigned int n = ecore_io_read_some(io, buf, len);
+		unsigned int n = ecore_io_read_some(io, ptr, len);
 	    if (-1 == n)
 	        return false;
 
 	    assert( n <= len );
 
 	    len -= n;
-	    buf += n;
+	    ptr += n;
 	}
 	while (0 == len);
 

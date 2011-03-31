@@ -26,13 +26,13 @@ typedef struct _string_t
 
 #define STRING_T_DEFAULT  { 0, NULL, 0, 0 }
 
-#define  string_init(s) s->ptr = 0; s->len = 0; s->capacity = 0
+#define  string_init(s) (s)->ptr = 0; (s)->len = 0; (s)->capacity = 0
 
 DLL_VARIABLE void string_finalize(string_t* pcs);
 
-#define  string_data(s) s->ptr
+#define  string_data(s) (s)->ptr
 
-#define  string_length(s) s->len
+#define  string_length(s) (s)->len
 
 //DLL_VARIABLE const char * string_data(string_t* pcs);
 //

@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <winsock2.h>
+#include "ecore/string.h"
+#include "networking.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,15 +21,17 @@ unsigned int _address_to_string(struct sockaddr* name
                      , unsigned int schema_len
                      , string_t* str)
 {
+	unsigned int ret = -1;
+
 	string_assignLen(str, "a", 100);
-	unsigned int ret = addressToString(name
+	ret = addressToString(name
 			, len
 			, schema
 			, schema_len
 			, string_data(str)
 			, string_length(str));
 	if(-1 == ret)
-		return;
+		return -1;
 
 	string_assignLen(str, string_data(str), ret);
 	return ret;

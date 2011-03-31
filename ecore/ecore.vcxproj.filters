@@ -27,9 +27,6 @@
     <ClInclude Include="include\ecore.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\internal.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="include\win32\stdbool.h">
       <Filter>头文件\win32</Filter>
     </ClInclude>
@@ -51,30 +48,39 @@
     <ClInclude Include="include\ecore\unittest.h">
       <Filter>头文件\ecore</Filter>
     </ClInclude>
+    <ClInclude Include="src\internal.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
     <ClInclude Include="src\networking.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ports.h">
       <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\array.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backend_iocp.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="src\ecore.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\hash.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\array.c">
+    <ClCompile Include="src\networking.c">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\string.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\backend_iocp.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\unittest.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\networking.c">
+    <ClCompile Include="src\utility.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

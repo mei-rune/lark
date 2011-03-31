@@ -284,6 +284,7 @@ void shutdownSocket()
 }
 
 #ifndef  __GNUC__
+
 bool transmitFile(SOCKET hSocket,
                   HANDLE hFile,
                   DWORD nNumberOfBytesToWrite,
@@ -293,7 +294,7 @@ bool transmitFile(SOCKET hSocket,
                   DWORD dwFlags)
 {
 
-    return sys_call_with_boolean(transmitfile(hSocket
+    return sys_call_with_boolean(__transmitfile(hSocket
                                   , hFile
                                   , nNumberOfBytesToWrite
                                   , nNumberOfBytesPerSend
