@@ -423,7 +423,7 @@ unsigned int addressToString(struct sockaddr* addr
 					 , unsigned int data_len)
 {
 	char* ptr = data;
-	if(data_len > 16)
+	if(data_len < 16)
 		return -1;
 
     if(NULL == schema)

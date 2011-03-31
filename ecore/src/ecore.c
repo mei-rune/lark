@@ -8,6 +8,7 @@
 #include <Ws2tcpip.h>
 #include <windows.h>
 #include "internal.h"
+#include "networking.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,7 +130,15 @@ DLL_VARIABLE  bool ecore_init(ecore_t* c, char* err, int len)
 	//7、纤程F1中调用ConverFiberToThread，转换为线程
 	//8、线程结束
 	ecore_internal_t* internal;
-	void* main_thread = ConvertThreadToFiberEx(c,FIBER_FLAG_FLOAT_SWITCH);
+	void* main_thread;
+	
+	
+	if(!initializeScket()){
+		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());
+		return false;
+	}
+
+	main_thread = ConvertThreadToFiberEx(c,FIBER_FLAG_FLOAT_SWITCH);
 	if( NULL == main_thread){
 		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());
 		return false;
@@ -201,23 +210,21 @@ void CALLBACK _ecore_fiber_proc(void* data)
 
 DLL_VARIABLE int ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context)
 {
-	ecore_thread_t* data;
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
-
-
-	void* fiber = CreateFiberEx(0,0,FIBER_FLAG_FLOAT_SWITCH,&_ecore_fiber_proc, context);
-	if(NULL == fiber)
-	{
-		_set_last_error(core, "创建纤程失败 - %s", _last_win_error());
-		return -1;
-	}
-
-	data = (ecore_thread_t*)my_malloc(sizeof(ecore_thread_t));
+	ecore_thread_t* data = (ecore_thread_t*)my_malloc(sizeof(ecore_thread_t));
+	
 	data->core = core;
 	data->back_thread = internal->main_thread;
 	data->callback_fn = callback_fn;
 	data->context = context;
-	data->self = fiber;
+
+	data->self = CreateFiberEx(0,0,FIBER_FLAG_FLOAT_SWITCH,&_ecore_fiber_proc, data);
+	if(NULL == data->self)
+	{
+		_set_last_error(core, "创建纤程失败 - %s", _last_win_error());
+		my_free(data);
+		return -1;
+	}
 
 	DLINK_InsertNext(&(internal->active_threads), data);
 	SwitchToFiber(data->self);

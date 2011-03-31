@@ -113,7 +113,7 @@ int  backend_poll(ecore_t* core, int milli_seconds){
         switch (GetLastError())
         {
         case WAIT_TIMEOUT:
-            return -2;
+            return 1;
 
         case ERROR_SUCCESS:
             return 0;
@@ -168,6 +168,7 @@ int _parse_ip_address(ecore_t* core, struct sockaddr* addr, size_t len, const ch
 
 
 		strncpy(host, ptr, end-ptr);
+		host[end-ptr] =0;
 		if(1 != inet_pton(AF_INET6, host, &(((struct sockaddr_in6*)addr)->sin6_addr)))
 		{
 			_set_last_error(core, "tcp 的 url 格式不正确, %s - %s", _last_win_error(), url);
@@ -191,6 +192,7 @@ int _parse_ip_address(ecore_t* core, struct sockaddr* addr, size_t len, const ch
 		}
 
 		strncpy(host, ptr, end-ptr);
+		host[end-ptr] =0;
 		if(1 != inet_pton(AF_INET, host, &(((struct sockaddr_in*)addr)->sin_addr)))
 		{
 			_set_last_error(core, "tcp 的 url 格式不正确, %s - %s", _last_win_error(), url);
@@ -221,7 +223,7 @@ bool _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
 		return false;
 	}
 
-    if(NULL != CreateIoCompletionPort((HANDLE)sock
+    if(NULL == CreateIoCompletionPort((HANDLE)sock
 									, iocp->completion_port
                                     , 0
                                     , 1))
@@ -268,6 +270,8 @@ bool _create_ipc(ecore_t* core, ecore_io_t* io, const char* addr)
 
 DLL_VARIABLE bool ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* str)
 {
+	memset(io, 0, sizeof(ecore_io_t));
+
 	if(0 == strncasecmp("tcp://", string_data(str), 6))
 		return _create_listen_tcp(core, io, string_data(str) + 6);
 	else if(0 == strncasecmp("ipc://", string_data(str), 6))
@@ -285,6 +289,9 @@ DLL_VARIABLE bool ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io
 	
 	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(listen_io->core->internal))->backend;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)listen_io->internal;
+
+	
+	memset(accepted_io, 0, sizeof(ecore_io_t));
 	memset(&command, 0, sizeof(iocp_command_t));
 
 
@@ -295,7 +302,7 @@ DLL_VARIABLE bool ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io
 		return false;
 	}
 
-    if(NULL != CreateIoCompletionPort((HANDLE)accepted
+    if(NULL == CreateIoCompletionPort((HANDLE)accepted
 									, iocp->completion_port
                                     , 0
                                     , 1))
@@ -416,6 +423,9 @@ DLL_VARIABLE bool ecore_io_connect(ecore_t* core, ecore_io_t* io, const string_t
 	ecore_io_internal_t* connected_internal;
 
 	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->backend;
+
+	
+	memset(io, 0, sizeof(ecore_io_t));
 	
 	if(0 != _parse_ip_address(core, &addr, sizeof(struct sockaddr), string_data(url)))
 		return false;
@@ -427,7 +437,7 @@ DLL_VARIABLE bool ecore_io_connect(ecore_t* core, ecore_io_t* io, const string_t
 		return false;
 	}
 
-    if(NULL != CreateIoCompletionPort((HANDLE)connected
+    if(NULL == CreateIoCompletionPort((HANDLE)connected
 									, iocp->completion_port
                                     , 0
                                     , 1))
@@ -545,20 +555,23 @@ DLL_VARIABLE void ecore_io_close(ecore_io_t* io)
 
 DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, unsigned int len)
 {
+	DWORD numberOfBytesWrite;
 	iocp_command_t command;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
 
-	if( WriteFileEx(internal->io_file
+	if(!WriteFile(internal->io_file
 		, buf
 		, len
-		, &command.invocation
-		, NULL))
+		, &numberOfBytesWrite
+		, &command.invocation)
+	   && WSA_IO_PENDING != WSAGetLastError())
 	{
-		_ecore_wait(io->core, &command.context);
-		return (0 == command.result_error)? command.result_bytes_transferred:-1;
+		_set_last_error(io->core, _last_win_error());
+		return -1;
 	}
-	return -1;
+	_ecore_wait(io->core, &command.context);
+	return (0 == command.result_error)? command.result_bytes_transferred:-1;
 }
 
 DLL_VARIABLE bool ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len)
@@ -575,27 +588,31 @@ DLL_VARIABLE bool ecore_io_write(ecore_io_t* io, const void* buf, unsigned int l
 	    len -= n;
 	    ptr += n;
 	}
-	while (0 == len);
+	while (0 != len);
 
 	return true;
 }
 
 DLL_VARIABLE unsigned int ecore_io_read_some(ecore_io_t* io, void* buf, unsigned int len)
 {
+	DWORD numberOfBytesRead;
 	iocp_command_t command;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
 
-	if( ReadFileEx(internal->io_file
+	if(!ReadFile(internal->io_file
 		, buf
 		, len
-		, (LPOVERLAPPED)(((char*)&command) - offsetof(iocp_command_t,invocation))
-		, NULL))
+		, &numberOfBytesRead
+		, &command.invocation)
+	   && WSA_IO_PENDING != WSAGetLastError())
 	{
-		_ecore_wait(io->core, &command.context);
-		return (0 == command.result_error)? command.result_bytes_transferred:-1;
+		_set_last_error(io->core, _last_win_error());
+		return -1;
 	}
-	return -1;
+
+	_ecore_wait(io->core, &command.context);
+	return (0 == command.result_error)? command.result_bytes_transferred:-1;
 }
 
 DLL_VARIABLE bool ecore_io_read(ecore_io_t* io, void* buf, unsigned int len)
@@ -612,7 +629,7 @@ DLL_VARIABLE bool ecore_io_read(ecore_io_t* io, void* buf, unsigned int len)
 	    len -= n;
 	    ptr += n;
 	}
-	while (0 == len);
+	while (0 != len);
 
 	return true;
 }
