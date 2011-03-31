@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+#ifndef  __GNUC__
+
 static LPFN_TRANSMITFILE __transmitfile = NULL;
 static LPFN_ACCEPTEX __acceptex = NULL;
 static LPFN_TRANSMITPACKETS __transmitpackets = NULL;
@@ -13,8 +15,11 @@ static LPFN_CONNECTEX __connectex = NULL;
 static LPFN_DISCONNECTEX __disconnectex = NULL;
 static LPFN_GETACCEPTEXSOCKADDRS __getacceptexsockaddrs = NULL;
 
+#endif
+
 #define sys_call(func)   (SOCKET_ERROR != (func))?true:false
 
+#define sys_call_with_boolean(func)   (TRUE == (func))?true:false
 
 
 bool poll(SOCKET sock, const struct timeval* time_val, int mode)
@@ -46,7 +51,7 @@ bool isWritable(SOCKET sock)
 }
 
 bool setBlocking(SOCKET sock, bool val)
-{	
+{
     u_long nonblock = (val)? 1 : 0;
     return sys_call(ioctlsocket(sock,
                               FIONBIO,
@@ -154,15 +159,20 @@ bool setBlocking(SOCKET sock, bool val)
 //}
 bool  initializeScket()
 {
+
+#ifndef  __GNUC__
     GUID GuidConnectEx = WSAID_CONNECTEX;
     GUID GuidDisconnectEx = WSAID_DISCONNECTEX;
     GUID GuidGetAcceptExSockAddrs = WSAID_GETACCEPTEXSOCKADDRS;
     GUID GuidAcceptEx = WSAID_ACCEPTEX;
     GUID GuidTransmitFile = WSAID_TRANSMITFILE;
     GUID GuidTransmitPackets = WSAID_TRANSMITPACKETS;
-	SOCKET cliSock;
 
+	SOCKET cliSock;
     DWORD dwBytes = 0;
+
+#endif
+
     WSADATA wsaData;
     if (0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
         return false;
@@ -174,6 +184,8 @@ bool  initializeScket()
         return false;
     }
 
+
+#ifndef  __GNUC__
     cliSock = socket(AF_INET , SOCK_STREAM, IPPROTO_TCP);
 
     if (SOCKET_ERROR == WSAIoctl(cliSock,
@@ -261,6 +273,7 @@ bool  initializeScket()
     }
 
     closesocket(cliSock);
+#endif
 
     return true;
 }
@@ -270,6 +283,7 @@ void shutdownSocket()
     WSACleanup();
 }
 
+#ifndef  __GNUC__
 bool transmitFile(SOCKET hSocket,
                   HANDLE hFile,
                   DWORD nNumberOfBytesToWrite,
@@ -278,13 +292,14 @@ bool transmitFile(SOCKET hSocket,
                   LPTRANSMIT_FILE_BUFFERS lpTransmitBuffers,
                   DWORD dwFlags)
 {
-    return TRUE == __transmitfile(hSocket
+
+    return sys_call_with_boolean(transmitfile(hSocket
                                   , hFile
                                   , nNumberOfBytesToWrite
                                   , nNumberOfBytesPerSend
                                   , lpOverlapped
                                   , lpTransmitBuffers
-                                  , dwFlags);
+                                  , dwFlags));
 }
 
 bool acceptEx(SOCKET sListenSocket,
@@ -296,14 +311,14 @@ bool acceptEx(SOCKET sListenSocket,
               LPDWORD lpdwBytesReceived,
               LPOVERLAPPED lpOverlapped)
 {
-    return TRUE == __acceptex(sListenSocket,
+    return sys_call_with_boolean(__acceptex(sListenSocket,
                               sAcceptSocket,
                               lpOutputBuffer,
                               dwReceiveDataLength,
                               dwLocalAddressLength,
                               dwRemoteAddressLength,
                               lpdwBytesReceived,
-                              lpOverlapped);
+                              lpOverlapped));
 }
 
 bool transmitPackets(SOCKET hSocket,
@@ -313,12 +328,12 @@ bool transmitPackets(SOCKET hSocket,
                      LPOVERLAPPED lpOverlapped,
                      DWORD dwFlags)
 {
-    return TRUE == __transmitpackets(hSocket,
+    return sys_call_with_boolean(__transmitpackets(hSocket,
                                      lpPacketArray,
                                      nElementCount,
                                      nSendSize,
                                      lpOverlapped,
-                                     dwFlags);
+                                     dwFlags));
 }
 
 bool connectEx(SOCKET s,
@@ -329,13 +344,13 @@ bool connectEx(SOCKET s,
                LPDWORD lpdwBytesSent,
                LPOVERLAPPED lpOverlapped)
 {
-    return TRUE == __connectex(s,
+    return sys_call_with_boolean(__connectex(s,
                                name,
                                namelen,
                                lpSendBuffer,
                                dwSendDataLength,
                                lpdwBytesSent,
-                               lpOverlapped);
+                               lpOverlapped));
 }
 
 bool disconnectEx(SOCKET hSocket,
@@ -343,10 +358,10 @@ bool disconnectEx(SOCKET hSocket,
                   DWORD dwFlags,
                   DWORD reserved)
 {
-    return TRUE == __disconnectex(hSocket,
+    return sys_call_with_boolean(__disconnectex(hSocket,
                                   lpOverlapped,
                                   dwFlags,
-                                  reserved);
+                                  reserved));
 }
 
 void getAcceptExSockaddrs(PVOID lpOutputBuffer,
@@ -369,9 +384,11 @@ void getAcceptExSockaddrs(PVOID lpOutputBuffer,
 }
 
 
+#endif  //__GNUC__
+
 bool stringToAddress(const char* host
                      , struct sockaddr* addr
-                     , int* len)
+                     , unsigned int* len)
 {
 	const char* begin;
     memset(addr, 0, *len);
@@ -380,7 +397,7 @@ bool stringToAddress(const char* host
     begin = strstr(host, "://");
     if (NULL != begin)
     {
-        if (begin != host && _T('6') == *(begin - 1))
+        if (begin != host && '6' == *(begin - 1))
             addr->sa_family = AF_INET6;
 
         begin += 3;
@@ -397,12 +414,12 @@ bool stringToAddress(const char* host
 									, len));
 }
 
-
-int addressToString(struct sockaddr* addr
-                     , int len
+unsigned int addressToString(struct sockaddr* addr
+                     , unsigned int   len
                      , const char* schema
+                     , unsigned int schema_len
                      , char* data
-					 , int data_len)
+					 , unsigned int data_len)
 {
 	char* ptr = data;
 	if(data_len > 16)
@@ -410,41 +427,51 @@ int addressToString(struct sockaddr* addr
 
     if(NULL == schema)
 	{
-		strcpy(ptr, "tcp");
-		data_len -= 3;
-		ptr += 3;
+    	schema = "tcp";
+    	schema_len = 3;
 	}
-	else
-	{
-		int slen = strlen(schema);
-		strcpy(ptr, "tcp");
-		data_len -= slen;
-		ptr += slen;
-	}
+    else if(-1 == schema_len)
+    {
+    	schema_len = strlen(schema);
+    }
+
+
+    if(schema_len >= data_len)
+    	return -1;
+
+	strncpy(ptr, schema, schema_len);
+	data_len -= schema_len;
+	ptr += schema_len;
+
 
 	if(addr->sa_family == AF_INET6)
 	{
 		*ptr = '6';
 		++ptr;
-		data_len;
+		--data_len;
 	}
-	
-	strcpy(ptr, "://");
+
+
+    if(3 >= data_len)
+    	return -1;
+
+	memcpy(ptr, "://", 3);
 	data_len -= 3;
 	ptr += 3;
 
 	{
-    DWORD addressLength = data_len;
 
-    if (SOCKET_ERROR == WSAAddressToStringA(addr
-					, len
-					, NULL
-					, ptr
-					, &addressLength))
-        return -1;
+		DWORD addressLength = data_len;
+		if (SOCKET_ERROR == WSAAddressToStringA(addr
+						, len
+						, NULL
+						, ptr
+						, &addressLength))
+			return -1;
+
+		ptr += addressLength;
 	}
 
-	ptr += data_len;
 	*ptr = 0;
     return ptr-data;
 }

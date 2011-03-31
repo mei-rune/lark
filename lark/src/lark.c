@@ -13,6 +13,7 @@ void clientHandler(ecore_io_t* client)
 {
 	for(;core->is_running;)
 	{
+	
 	}
 }
 

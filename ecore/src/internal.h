@@ -4,6 +4,9 @@
 #include "ecore_config.h"
 #include "ecore.h"
 #include "ecore/link.h"
+#include "ports.h"
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,23 +47,19 @@ typedef struct _ecore_internal
 
 typedef struct _ecore_io_internal {
 	HANDLE file;
+	int type;
+
+#define ecore_io_type_tcp_listen   1
+#define ecore_io_type_tcp_accept   2
+#define	ecore_io_type_ipc   3
+#define	ecore_io_type_file  4
+
 } ecore_io_internal_t;
 
 typedef struct _wait_context
 {
-	int type;
-	union 
-	{
-		void* thread;
-		struct 
-		{
-			void (*complete_fn)(void*);
-			void* context;
-		} func;
-	} data;
-
-} _wait_context_t;
-
+	void* thread;
+} swap_context_t;
 
 void* my_calloc(int _NumOfElements, int _SizeOfElements);
 void  my_free(void * _Memory);
@@ -69,22 +68,22 @@ void* my_realloc(void * _Memory, int _NewSize);
 
 
 
-#define _ecore_switch(to)													\
-		if(aio_command_buffer == to->type)									\
-			SwitchToFiber(to->data.thread);								\
-		else															\
-			to->data.func.complete_fn(to->data.func.context)
+#define _ecore_fire_event(context)	SwitchToFiber((context)->thread);
 
-#define _ecore_wait(core)   SwitchToFiber(((ecore_internal_t*)(core)->internal)->main_thread)
+#define _ecore_wait(core, context)  (context)->thread = GetCurrentFiber(); SwitchToFiber(((ecore_internal_t*)(core)->internal)->main_thread)
 
 int backend_init(ecore_t* core, char* err, int len);
-int  backend_poll(ecore_t* core);
+int  backend_poll(ecore_t* core, int milli_seconds);
 void  backend_cleanup(ecore_t* core);
 
 
+unsigned int _address_to_string(struct sockaddr* name
+                     , unsigned int len
+                     , const char* schema
+                     , unsigned int schema_len
+                     , string_t* str);
 
-
-const char* __last_win_error(unsigned long code);
+const char* _last_win_error_with_code(unsigned long code);
 const char* _last_win_error();
 const char* _last_crt_error();
 void _set_last_error(ecore_t* core, const char* fmt, ... );
