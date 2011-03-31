@@ -112,11 +112,11 @@ void _set_last_error(ecore_t* core, const char* fmt, ... )
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 	va_list argptr;
 	va_start(argptr, fmt);
-	vsnprintf(internal->err, ECORE_MAX_ERR_LEN, fmt, argptr);
+	string_vsprintf(&core->error, fmt, argptr);
 	va_end(argptr);
 }
 
-DLL_VARIABLE  int ecore_init(ecore_t* c, char* err, int len)
+DLL_VARIABLE  bool ecore_init(ecore_t* c, char* err, int len)
 {
 
 	//最后，让我们假设一个线程中有2个纤程，总结一下纤程的用法：
@@ -132,7 +132,7 @@ DLL_VARIABLE  int ecore_init(ecore_t* c, char* err, int len)
 	void* main_thread = ConvertThreadToFiberEx(c,FIBER_FLAG_FLOAT_SWITCH);
 	if( NULL == main_thread){
 		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());
-		return -1;
+		return false;
 	}
 
 	internal = (ecore_internal_t*)my_malloc(sizeof(ecore_internal_t));
@@ -143,18 +143,19 @@ DLL_VARIABLE  int ecore_init(ecore_t* c, char* err, int len)
 
 	c->internal = internal;
 	c->is_running = true;
+	string_init(&c->error);
 
 	if(0 != backend_init(c, err, len))
 	{
 		ConvertFiberToThread();
 		my_free(internal);
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
-DLL_VARIABLE  void ecore_free(ecore_t* core)
+DLL_VARIABLE  void ecore_finalize(ecore_t* core)
 {
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 
@@ -182,13 +183,6 @@ DLL_VARIABLE  void ecore_shutdown(ecore_t* core)
 {
 	core->is_running = false;
 }
-
-DLL_VARIABLE  bool _ecore_is_running(ecore_t* core)
-{
-	return core->is_running;
-}
-
-
 
 void CALLBACK _ecore_fiber_proc(void* data)
 {

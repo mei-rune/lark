@@ -169,7 +169,7 @@ DLL_VARIABLE void string_free(string_t* pcs)
 //}
 
 
-DLL_VARIABLE void string_createLen(string_t* pcs, const char* s
+DLL_VARIABLE string_t* string_createLen(string_t* pcs, const char* s
 						   , size_t len)
 {
 	pcs->capacity  = (10 > len) ? 10 : len;
@@ -180,21 +180,22 @@ DLL_VARIABLE void string_createLen(string_t* pcs, const char* s
 
 	if(0 != s)
 		strncpy(pcs->ptr, s, len);
-	pcs->ptr[pcs->len]   =   '\0';
-	pcs->len = len;
+	pcs->ptr[len]   =   '\0';
+	return pcs;
 }
 
-DLL_VARIABLE void string_create(string_t* pcs, char const *s)
+DLL_VARIABLE string_t* string_create(string_t* pcs, char const *s)
 {
 	size_t len = string_strlen_safe_(s);
-	string_createLen(pcs, s, len);
+	return string_createLen(pcs, s, len);
 }
 
-DLL_VARIABLE void string_createN(string_t* pcs, char ch
+DLL_VARIABLE string_t* string_createN(string_t* pcs, char ch
 						 , size_t n)
 {
 	string_createLen(pcs, NULL, n);
 	memset(pcs->ptr, ch, sizeof(char) * n);
+	return pcs;
 }
 
 DLL_VARIABLE void string_vsprintf_(string_t* pcs, size_t begin, const char* fmt, va_list argList)
@@ -223,40 +224,45 @@ DLL_VARIABLE void string_vsprintf_(string_t* pcs, size_t begin, const char* fmt,
 	return;
 }
 
-DLL_VARIABLE void string_create_vprintf(string_t* pcs, const char*fmt, va_list argList)
+DLL_VARIABLE string_t* string_vsprintf(string_t* pcs, const char*fmt, va_list argList)
 {
 	string_vsprintf_(pcs, 0, fmt, argList);
+	return pcs;
 }
 
-DLL_VARIABLE void string_create_printf(string_t* pcs, const char*fmt, ...)
+DLL_VARIABLE string_t* string_sprintf(string_t* pcs, const char*fmt, ...)
 {
 	va_list argList;
 	va_start(argList, fmt);
 	string_vsprintf_(pcs, 0, fmt, argList);
 	va_end( argList );
+	return pcs;
 }
 
-DLL_VARIABLE void string_append_vprintf(string_t* pcs, const char*fmt, va_list argList)
+DLL_VARIABLE string_t* string_append_vprintf(string_t* pcs, const char*fmt, va_list argList)
 {
 	string_vsprintf_(pcs, pcs->len, fmt, argList);
+	return pcs;
 }
 
-DLL_VARIABLE void string_appeend_printf(string_t* pcs, const char*fmt, ...)
+DLL_VARIABLE string_t* string_appeend_printf(string_t* pcs, const char*fmt, ...)
 {
 	va_list argList;
 	va_start(argList, fmt);
 	string_vsprintf_(pcs, pcs->len, fmt, argList);
 	va_end( argList );
+	return pcs;
 }
 
-DLL_VARIABLE void string_assign(string_t*   pcs
+DLL_VARIABLE string_t* string_assign(string_t*   pcs
 						 ,   char const*         s)
 {
 	const size_t len = string_strlen_safe_(s);
 	string_assignLen(pcs, s, len);
+	return pcs;
 }
 
-DLL_VARIABLE void string_assignLen(string_t*       pcs
+DLL_VARIABLE string_t* string_assignLen(string_t*       pcs
 					  ,       char const*             s
 					  ,       size_t                  len)
 {
@@ -264,6 +270,7 @@ DLL_VARIABLE void string_assignLen(string_t*       pcs
 	strncpy(pcs->ptr, s, len);
 	pcs->len += len;
 	pcs->ptr[pcs->len] = '\0';
+	return pcs;
 }
 
 //DLL_VARIABLE string_t* string_copy(const string_t*   pcs)
@@ -273,19 +280,21 @@ DLL_VARIABLE void string_assignLen(string_t*       pcs
 //	return string_createLen(pcs->ptr, pcs->len);
 //}
 
-DLL_VARIABLE void string_copy(string_t* dst, const string_t* src)
+DLL_VARIABLE string_t* string_copy(string_t* dst, const string_t* src)
 {
 	string_createLen(dst, src->ptr, src->len);
+	return dst;
 }
 
-DLL_VARIABLE void string_append(string_t*   pcs
+DLL_VARIABLE string_t* string_append(string_t*   pcs
 				   ,   char const*         s)
 {
 	const size_t len = string_strlen_safe_(s);
 	string_appendLen(pcs, s, len);
+	return pcs;
 }
 
-DLL_VARIABLE void string_appendLen(string_t*   pcs
+DLL_VARIABLE string_t* string_appendLen(string_t*   pcs
 					  ,       char const*         s
 					  ,       size_t              len)
 {
@@ -302,15 +311,17 @@ DLL_VARIABLE void string_appendLen(string_t*   pcs
 	strncpy(pcs->ptr + pcs->len, s, len);
 	pcs->len = newLen;
 	pcs->ptr[pcs->len] = '\0';
+	return pcs;
 }
 
-DLL_VARIABLE void string_truncate(string_t*   pcs
+DLL_VARIABLE string_t* string_truncate(string_t*   pcs
 					 , size_t    len)
 {
 	cstring_assert(NULL != pcs);
 
 	if (len < pcs->len)
 		pcs->ptr[pcs->len = len] = '\0';
+	return pcs;
 }
 
 DLL_VARIABLE void string_swap(string_t* pcs1

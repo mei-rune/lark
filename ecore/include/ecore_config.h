@@ -14,7 +14,7 @@
 
 /* On Windows, variables that may be in a DLL must be marked specially.  */
 #ifdef _MSC_VER
-#ifdef BUILDING_DLL
+#ifdef _USRDLL
 #ifdef  ECORE_BUILDING
 # define DLL_VARIABLE __declspec (dllexport)
 #else

@@ -35,16 +35,18 @@ extern "C" {
  typedef struct _ecore{
 	// 是否正在运行中 ...
 	bool is_running;
+	// 最后一次的错误
+	string_t error;
+
 	void* internal;
  }  ecore_t;
 
-DLL_VARIABLE  int ecore_init(ecore_t* core, char* err_buf, int len);
-DLL_VARIABLE  void ecore_free(ecore_t* core);
-DLL_VARIABLE  int ecore_poll(ecore_t* core, int milli_seconds);
-DLL_VARIABLE  void ecore_shutdown(ecore_t* core);
+DLL_VARIABLE bool ecore_init(ecore_t* core, char* err_buf, int len);
+DLL_VARIABLE void ecore_finalize(ecore_t* core);
+DLL_VARIABLE int ecore_poll(ecore_t* core, int milli_seconds);
+DLL_VARIABLE void ecore_shutdown(ecore_t* core);
 DLL_VARIABLE int ecore_at_exit(ecore_t* io, void (*cleanup_fn)(void*), void* context);
 
-DLL_VARIABLE  bool _ecore_is_running();
 
 DLL_VARIABLE int ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context);
 
@@ -62,7 +64,7 @@ typedef struct _ecore_io{
 
 DLL_VARIABLE bool ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* str);
 DLL_VARIABLE bool ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io);
-DLL_VARIABLE ecore_io_t* ecore_io_connect(ecore_t* core, const string_t* str);
+DLL_VARIABLE bool ecore_io_connect(ecore_t* core, ecore_io_t*, const string_t* str);
 DLL_VARIABLE void ecore_io_close(ecore_io_t* io);
 DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, unsigned int len);
 DLL_VARIABLE bool ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len);
