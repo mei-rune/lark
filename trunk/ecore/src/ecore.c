@@ -13,6 +13,17 @@
 extern "C" {
 #endif
 
+#if __GNUC__
+
+#ifndef FIBER_FLAG_FLOAT_SWITCH
+#define FIBER_FLAG_FLOAT_SWITCH 0x1     // context switch floating point
+#endif
+
+#ifndef ConvertThreadToFiberEx
+#define ConvertThreadToFiberEx(lpParameter,dwFlags)  ConvertThreadToFiber(lpParameter)
+#endif
+
+#endif
 
 void* my_calloc(int _NumOfElements, int _SizeOfElements)
 {
@@ -47,14 +58,17 @@ char*  my_strdup(const char * src)
 
 const char* _last_win_error()
 {
-	return __last_win_error(GetLastError());
+	return _last_win_error_with_code(GetLastError());
 }
 
-__declspec( thread ) char* lpMsgBuf = NULL;
- 
+#ifdef __GNUC__
+	__thread char* lpMsgBuf = NULL;
+#else
+	__declspec( thread ) char* lpMsgBuf = NULL;
+#endif
 
 
-const char* __last_win_error(unsigned long code)
+const char* _last_win_error_with_code(unsigned long code)
 {
 	DWORD ret = 0;
 	if(NULL != lpMsgBuf)
@@ -117,7 +131,7 @@ DLL_VARIABLE  int ecore_init(ecore_t* c, char* err, int len)
 	ecore_internal_t* internal;
 	void* main_thread = ConvertThreadToFiberEx(c,FIBER_FLAG_FLOAT_SWITCH);
 	if( NULL == main_thread){
-		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());  
+		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());
 		return -1;
 	}
 
@@ -126,7 +140,7 @@ DLL_VARIABLE  int ecore_init(ecore_t* c, char* err, int len)
 	DLINK_Initialize(&(internal->active_threads));
 	DLINK_Initialize(&(internal->delete_threads));
 
-	
+
 	c->internal = internal;
 	c->is_running = true;
 
@@ -152,18 +166,16 @@ DLL_VARIABLE  void ecore_free(ecore_t* core)
 	my_free(internal);
 }
 
-DLL_VARIABLE int ecore_poll(ecore_t* core)
+DLL_VARIABLE int ecore_poll(ecore_t* core, int milli_seconds)
 {
-	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
+	//ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 	if(!core->is_running)
 	{
 		_set_last_error(core, "系统已停止.");
 		return -1;
 	}
 
-	
-
-	return backend_poll(core);
+	return backend_poll(core, milli_seconds);
 }
 
 DLL_VARIABLE  void ecore_shutdown(ecore_t* core)
@@ -195,23 +207,27 @@ void CALLBACK _ecore_fiber_proc(void* data)
 
 DLL_VARIABLE int ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context)
 {
+	ecore_thread_t* data;
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
-	ecore_thread_t* data = (ecore_thread_t*)my_malloc(sizeof(ecore_thread_t));
-	data->core = core;
-	data->back_thread = internal->main_thread;
-	data->callback_fn = callback_fn;
-	data->context = context;
 
-	data->self = CreateFiberEx(0,0,FIBER_FLAG_FLOAT_SWITCH,&_ecore_fiber_proc, data);
-	if(NULL == data->self)
+
+	void* fiber = CreateFiberEx(0,0,FIBER_FLAG_FLOAT_SWITCH,&_ecore_fiber_proc, context);
+	if(NULL == fiber)
 	{
-		my_free(data);
 		_set_last_error(core, "创建纤程失败 - %s", _last_win_error());
 		return -1;
 	}
 
+	data = (ecore_thread_t*)my_malloc(sizeof(ecore_thread_t));
+	data->core = core;
+	data->back_thread = internal->main_thread;
+	data->callback_fn = callback_fn;
+	data->context = context;
+	data->self = fiber;
+
 	DLINK_InsertNext(&(internal->active_threads), data);
 	SwitchToFiber(data->self);
+	return 0;
 }
 
 #ifdef __cplusplus

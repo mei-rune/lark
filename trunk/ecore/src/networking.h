@@ -3,6 +3,8 @@
 #define _networking_h_ 1
 
 #include "ecore_config.h"
+#include <winsock2.h>
+#include <Mswsock.h>
 #ifdef _MSC_VER
 #include "win32/stdbool.h"
 #else
@@ -94,7 +96,7 @@ bool acceptEx(SOCKET sListenSocket,
  * @see MSDN
  */
 bool transmitPackets(SOCKET hSocket,
-                     LPTRANSMIT_PACKETS_ELEMENT lpPacketArray,
+                     TRANSMIT_PACKETS_ELEMENT* lpPacketArray,
                      DWORD nElementCount,
                      DWORD nSendSize,
                      LPOVERLAPPED lpOverlapped,
@@ -138,14 +140,17 @@ void getAcceptExSockaddrs(PVOID lpOutputBuffer,
  */
 bool stringToAddress(const char* host
                      , struct sockaddr* addr
-                     , int* len);
+                     , unsigned int* len);
 
-int addressToString(struct sockaddr* name
-                     , int len
+/**
+ * 将地址转换为 <schema>://<addr>:<port> 格式的字符串
+ */
+unsigned int addressToString(struct sockaddr* name
+                     , unsigned int len
                      , const char* schema
+                     , unsigned int schema_len
                      , char* data
-					 , int data_len
-					 , int* ret_len);
+					 , unsigned int data_len);
 
 
 #ifdef __cplusplus
