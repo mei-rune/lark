@@ -4,6 +4,14 @@
 /* 如果有 inet_pton 或 inet_ntop 函数时, 请定义 HAS_INET_NTOP */
 /* #undef HAS_INET_NTOP */
 
+#ifdef _WIN32
+#if (NTDDI_VERSION >= NTDDI_VISTA)
+#define HAS_INET_NTOP 1
+#endif
+#else
+#define HAS_INET_NTOP 1
+#endif
+
 /* On Windows, variables that may be in a DLL must be marked specially.  */
 #ifdef _MSC_VER
 #ifdef BUILDING_DLL

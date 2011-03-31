@@ -7,13 +7,15 @@
 extern "C" {
 #endif
 
-#ifdef _WIN32
+	
+#ifndef HAS_INET_NTOP
 
 const char * inet_ntop(int af, const void *src, char *dst, size_t size);
-
 int inet_pton(int af,  const char *src,  void *dst);
 
 #endif
+
+
 
 #ifdef __cplusplus
 }

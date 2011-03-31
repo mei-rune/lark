@@ -46,6 +46,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ECORE_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>./include</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -83,6 +84,7 @@
     <ClInclude Include="include\win32\stdbool.h" />
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="src\networking.h" />
+    <ClInclude Include="src\ports.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\array.c" />
@@ -92,6 +94,7 @@
     <ClCompile Include="src\networking.c" />
     <ClCompile Include="src\string.c" />
     <ClCompile Include="src\unittest.c" />
+    <ClCompile Include="src\utility.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
