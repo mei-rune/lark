@@ -110,14 +110,14 @@ const char* _last_crt_error()
 
 void _set_last_error(ecore_t* core, const char* fmt, ... )
 {
-	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
+	//ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 	va_list argptr;
 	va_start(argptr, fmt);
-	string_vsprintf(&core->error, fmt, argptr);
+	string_assign_vsprintf(&core->error, fmt, argptr);
 	va_end(argptr);
 }
 
-DLL_VARIABLE  bool ecore_init(ecore_t* c, char* err, int len)
+DLL_VARIABLE ecore_rc ecore_init(ecore_t* c, char* err, int len)
 {
 
 	//最后，让我们假设一个线程中有2个纤程，总结一下纤程的用法：
@@ -131,17 +131,17 @@ DLL_VARIABLE  bool ecore_init(ecore_t* c, char* err, int len)
 	//8、线程结束
 	ecore_internal_t* internal;
 	void* main_thread;
-	
-	
-	if(!initializeScket()){
-		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());
-		return false;
+
+
+	if(ECORE_RC_OK != initializeScket()){
+		snprintf(err, len, "初始化网络库失败 - %s", _last_win_error());
+		return ECORE_RC_ERROR;
 	}
 
 	main_thread = ConvertThreadToFiberEx(c,FIBER_FLAG_FLOAT_SWITCH);
 	if( NULL == main_thread){
 		snprintf(err, len, "将当前线程转换到纤程失败 - %s", _last_win_error());
-		return false;
+		return ECORE_RC_ERROR;
 	}
 
 	internal = (ecore_internal_t*)my_malloc(sizeof(ecore_internal_t));
@@ -151,17 +151,17 @@ DLL_VARIABLE  bool ecore_init(ecore_t* c, char* err, int len)
 
 
 	c->internal = internal;
-	c->is_running = true;
+	c->is_running = 1;
 	string_init(&c->error);
 
-	if(0 != backend_init(c, err, len))
+	if(ECORE_RC_OK != backend_init(c, err, len))
 	{
 		ConvertFiberToThread();
 		my_free(internal);
-		return false;
+		return ECORE_RC_ERROR;
 	}
 
-	return true;
+	return ECORE_RC_OK;
 }
 
 DLL_VARIABLE  void ecore_finalize(ecore_t* core)
@@ -176,13 +176,13 @@ DLL_VARIABLE  void ecore_finalize(ecore_t* core)
 	my_free(internal);
 }
 
-DLL_VARIABLE int ecore_poll(ecore_t* core, int milli_seconds)
+DLL_VARIABLE ecore_rc ecore_poll(ecore_t* core, int milli_seconds)
 {
 	//ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 	if(!core->is_running)
 	{
 		_set_last_error(core, "系统已停止.");
-		return -1;
+		return ECORE_RC_ERROR;
 	}
 
 	return backend_poll(core, milli_seconds);
@@ -190,7 +190,7 @@ DLL_VARIABLE int ecore_poll(ecore_t* core, int milli_seconds)
 
 DLL_VARIABLE  void ecore_shutdown(ecore_t* core)
 {
-	core->is_running = false;
+	core->is_running = ECORE_RC_ERROR;
 }
 
 void CALLBACK _ecore_fiber_proc(void* data)
@@ -208,11 +208,11 @@ void CALLBACK _ecore_fiber_proc(void* data)
 	SwitchToFiber(context->back_thread);
 }
 
-DLL_VARIABLE int ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context)
+DLL_VARIABLE ecore_rc ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context)
 {
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 	ecore_thread_t* data = (ecore_thread_t*)my_malloc(sizeof(ecore_thread_t));
-	
+
 	data->core = core;
 	data->back_thread = internal->main_thread;
 	data->callback_fn = callback_fn;
@@ -223,12 +223,12 @@ DLL_VARIABLE int ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), v
 	{
 		_set_last_error(core, "创建纤程失败 - %s", _last_win_error());
 		my_free(data);
-		return -1;
+		return ECORE_RC_ERROR;
 	}
 
 	DLINK_InsertNext(&(internal->active_threads), data);
 	SwitchToFiber(data->self);
-	return 0;
+	return ECORE_RC_OK;
 }
 
 #ifdef __cplusplus

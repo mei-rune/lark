@@ -1,12 +1,110 @@
 
 #include "ecore_config.h"
+#include <Ws2tcpip.h>
 #include "networking.h"
+#include "ports.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef  __GNUC__
+
+#ifdef  __MINGW32__
+
+/*
+ * "QueryInterface" versions of the above APIs.
+ */
+
+typedef
+BOOL
+(PASCAL FAR * LPFN_TRANSMITFILE)(
+     SOCKET hSocket,
+     HANDLE hFile,
+     DWORD nNumberOfBytesToWrite,
+     DWORD nNumberOfBytesPerSend,
+     LPOVERLAPPED lpOverlapped,
+     LPTRANSMIT_FILE_BUFFERS lpTransmitBuffers,
+     DWORD dwReserved
+    );
+
+#define WSAID_TRANSMITFILE \
+        {0xb5367df0,0xcbac,0x11cf,{0x95,0xca,0x00,0x80,0x5f,0x48,0xa1,0x92}}
+
+typedef
+BOOL
+(PASCAL FAR * LPFN_ACCEPTEX)(
+     SOCKET sListenSocket,
+     SOCKET sAcceptSocket,
+     PVOID lpOutputBuffer,
+     DWORD dwReceiveDataLength,
+     DWORD dwLocalAddressLength,
+     DWORD dwRemoteAddressLength,
+     LPDWORD lpdwBytesReceived,
+     LPOVERLAPPED lpOverlapped
+    );
+
+#define WSAID_ACCEPTEX \
+        {0xb5367df1,0xcbac,0x11cf,{0x95,0xca,0x00,0x80,0x5f,0x48,0xa1,0x92}}
+
+typedef
+VOID
+(PASCAL FAR * LPFN_GETACCEPTEXSOCKADDRS)(
+     PVOID lpOutputBuffer,
+     DWORD dwReceiveDataLength,
+     DWORD dwLocalAddressLength,
+     DWORD dwRemoteAddressLength,
+     struct sockaddr **LocalSockaddr,
+     LPINT LocalSockaddrLength,
+     struct sockaddr **RemoteSockaddr,
+     LPINT RemoteSockaddrLength
+    );
+
+#define WSAID_GETACCEPTEXSOCKADDRS \
+        {0xb5367df2,0xcbac,0x11cf,{0x95,0xca,0x00,0x80,0x5f,0x48,0xa1,0x92}}
+
+
+typedef
+BOOL
+(PASCAL FAR * LPFN_TRANSMITPACKETS) (
+     SOCKET hSocket,
+     TRANSMIT_PACKETS_ELEMENT* lpPacketArray,
+     DWORD nElementCount,
+     DWORD nSendSize,
+     LPOVERLAPPED lpOverlapped,
+     DWORD dwFlags
+    );
+
+#define WSAID_TRANSMITPACKETS \
+    {0xd9689da0,0x1f90,0x11d3,{0x99,0x71,0x00,0xc0,0x4f,0x68,0xc8,0x76}}
+
+typedef
+BOOL
+(PASCAL FAR * LPFN_CONNECTEX) (
+     SOCKET s,
+     const struct sockaddr FAR *name,
+     int namelen,
+     PVOID lpSendBuffer,
+     DWORD dwSendDataLength,
+     LPDWORD lpdwBytesSent,
+     LPOVERLAPPED lpOverlapped
+    );
+
+#define WSAID_CONNECTEX \
+    {0x25a207b9,0xddf3,0x4660,{0x8e,0xe9,0x76,0xe5,0x8c,0x74,0x06,0x3e}}
+
+typedef
+BOOL
+(PASCAL FAR * LPFN_DISCONNECTEX) (
+     SOCKET s,
+     LPOVERLAPPED lpOverlapped,
+     DWORD  dwFlags,
+     DWORD  dwReserved
+    );
+
+#define WSAID_DISCONNECTEX \
+    {0x7fda2e11,0x8630,0x436f,{0xa0, 0x31, 0xf5, 0x36, 0xa6, 0xee, 0xc1, 0x57}}
+
+#endif
 
 static LPFN_TRANSMITFILE __transmitfile = NULL;
 static LPFN_ACCEPTEX __acceptex = NULL;
@@ -15,14 +113,13 @@ static LPFN_CONNECTEX __connectex = NULL;
 static LPFN_DISCONNECTEX __disconnectex = NULL;
 static LPFN_GETACCEPTEXSOCKADDRS __getacceptexsockaddrs = NULL;
 
-#endif
 
-#define sys_call(func)   (SOCKET_ERROR != (func))?true:false
+#define sys_call(func)   (SOCKET_ERROR != (func))?ECORE_RC_OK:ECORE_RC_ERROR
 
-#define sys_call_with_boolean(func)   (TRUE == (func))?true:false
+#define sys_call_with_ecore_rcean(func)   (TRUE == (func))?ECORE_RC_OK:ECORE_RC_ERROR
 
 
-bool poll(SOCKET sock, const struct timeval* time_val, int mode)
+int poll(SOCKET sock, const struct timeval* time_val, int mode)
 {
     fd_set socket_set;
     FD_ZERO(&socket_set);
@@ -31,10 +128,10 @@ bool poll(SOCKET sock, const struct timeval* time_val, int mode)
     return (1 == select(0, (mode & select_read) ? &socket_set : NULL
                           , (mode & select_write) ? &socket_set : NULL
                           , (mode & select_error) ? &socket_set : NULL
-                          , time_val));
+                          , time_val))?1:0;
 }
 
-bool isReadable(SOCKET sock)
+int isReadable(SOCKET sock)
 {
     struct timeval time_val;
     time_val.tv_sec = 0;
@@ -42,7 +139,7 @@ bool isReadable(SOCKET sock)
     return poll(sock, &time_val, select_read);
 }
 
-bool isWritable(SOCKET sock)
+int isWritable(SOCKET sock)
 {
     struct timeval time_val;
     time_val.tv_sec = 0;
@@ -50,15 +147,15 @@ bool isWritable(SOCKET sock)
     return poll(sock, &time_val, select_write);
 }
 
-bool setBlocking(SOCKET sock, bool val)
+ecore_rc setNonblocking(SOCKET sock)
 {
-    u_long nonblock = (val)? 1 : 0;
+    u_long nonblock = 1;
     return sys_call(ioctlsocket(sock,
                               FIONBIO,
                               &nonblock));
 }
 //
-//bool send_n(SOCKET sock, const char* buf, size_t length)
+//ecore_rc send_n(SOCKET sock, const char* buf, size_t length)
 //{
 //    do
 //    {
@@ -66,17 +163,17 @@ bool setBlocking(SOCKET sock, bool val)
 //        int n = send(sock, buf, length, 0);
 //#pragma warning(default: 4267)
 //        if (0 >= n)
-//            return false;
+//            return ECORE_RC_ERROR;
 //
 //        length -= n;
 //        buf += n;
 //    }
 //    while (0 < length);
 //
-//    return true;
+//    return ECORE_RC_OK;
 //}
 //
-//bool recv_n(SOCKET sock, char* buf, size_t length)
+//ecore_rc recv_n(SOCKET sock, char* buf, size_t length)
 //{
 //    do
 //    {
@@ -85,17 +182,17 @@ bool setBlocking(SOCKET sock, bool val)
 //#pragma warning(default: 4267)
 //
 //        if (0 >= n)
-//            return false;
+//            return ECORE_RC_ERROR;
 //
 //        length -= n;
 //        buf += n;
 //    }
 //    while (0 < length);
 //
-//    return true;
+//    return ECORE_RC_OK;
 //}
 //
-//bool sendv_n(SOCKET sock, const io_mem_buf* wsaBuf, size_t size)
+//ecore_rc sendv_n(SOCKET sock, const io_mem_buf* wsaBuf, size_t size)
 //{
 //    std::vector<io_mem_buf> buf(wsaBuf, wsaBuf + size);
 //    io_mem_buf* p = &buf[0];
@@ -106,7 +203,7 @@ bool setBlocking(SOCKET sock, bool val)
 //#pragma warning(disable: 4267)
 //        if (SOCKET_ERROR == ::WSASend(sock, p, size, &numberOfBytesSent, 0, 0 , 0))
 //#pragma warning(default: 4267)
-//            return false;
+//            return ECORE_RC_ERROR;
 //
 //        do
 //        {
@@ -124,10 +221,10 @@ bool setBlocking(SOCKET sock, bool val)
 //    }
 //    while (0 < size);
 //
-//    return true;
+//    return ECORE_RC_OK;
 //}
 //
-//bool recvv_n(SOCKET sock, io_mem_buf* wsaBuf, size_t size)
+//ecore_rc recvv_n(SOCKET sock, io_mem_buf* wsaBuf, size_t size)
 //{
 //    io_mem_buf* p = wsaBuf;
 //
@@ -137,7 +234,7 @@ bool setBlocking(SOCKET sock, bool val)
 //#pragma warning(disable: 4267)
 //        if (SOCKET_ERROR == ::WSARecv(sock, p, size, &numberOfBytesRecvd, 0, 0 , 0))
 //#pragma warning(default: 4267)
-//            return false;
+//            return ECORE_RC_ERROR;
 //
 //        do
 //        {
@@ -155,12 +252,10 @@ bool setBlocking(SOCKET sock, bool val)
 //    }
 //    while (0 < size);
 //
-//    return true;
+//    return ECORE_RC_OK;
 //}
-bool  initializeScket()
+ecore_rc  initializeScket()
 {
-
-#ifndef  __GNUC__
     GUID GuidConnectEx = WSAID_CONNECTEX;
     GUID GuidDisconnectEx = WSAID_DISCONNECTEX;
     GUID GuidGetAcceptExSockAddrs = WSAID_GETACCEPTEXSOCKADDRS;
@@ -171,21 +266,17 @@ bool  initializeScket()
 	SOCKET cliSock;
     DWORD dwBytes = 0;
 
-#endif
-
     WSADATA wsaData;
     if (0 != WSAStartup(MAKEWORD(2, 2), &wsaData))
-        return false;
+        return ECORE_RC_ERROR;
 
     if (LOBYTE(wsaData.wVersion) != 2 ||
             HIBYTE(wsaData.wVersion) != 2)
     {
         WSACleanup();
-        return false;
+        return ECORE_RC_ERROR;
     }
 
-
-#ifndef  __GNUC__
     cliSock = socket(AF_INET , SOCK_STREAM, IPPROTO_TCP);
 
     if (SOCKET_ERROR == WSAIoctl(cliSock,
@@ -273,9 +364,8 @@ bool  initializeScket()
     }
 
     closesocket(cliSock);
-#endif
 
-    return true;
+    return ECORE_RC_OK;
 }
 
 void shutdownSocket()
@@ -283,9 +373,7 @@ void shutdownSocket()
     WSACleanup();
 }
 
-#ifndef  __GNUC__
-
-bool transmitFile(SOCKET hSocket,
+ecore_rc transmitFile(SOCKET hSocket,
                   HANDLE hFile,
                   DWORD nNumberOfBytesToWrite,
                   DWORD nNumberOfBytesPerSend,
@@ -294,7 +382,7 @@ bool transmitFile(SOCKET hSocket,
                   DWORD dwFlags)
 {
 
-    return sys_call_with_boolean(__transmitfile(hSocket
+    return sys_call_with_ecore_rcean(__transmitfile(hSocket
                                   , hFile
                                   , nNumberOfBytesToWrite
                                   , nNumberOfBytesPerSend
@@ -303,7 +391,7 @@ bool transmitFile(SOCKET hSocket,
                                   , dwFlags));
 }
 
-bool acceptEx(SOCKET sListenSocket,
+ecore_rc acceptEx(SOCKET sListenSocket,
               SOCKET sAcceptSocket,
               PVOID lpOutputBuffer,
               DWORD dwReceiveDataLength,
@@ -312,7 +400,7 @@ bool acceptEx(SOCKET sListenSocket,
               LPDWORD lpdwBytesReceived,
               LPOVERLAPPED lpOverlapped)
 {
-    return sys_call_with_boolean(__acceptex(sListenSocket,
+    return sys_call_with_ecore_rcean(__acceptex(sListenSocket,
                               sAcceptSocket,
                               lpOutputBuffer,
                               dwReceiveDataLength,
@@ -322,14 +410,14 @@ bool acceptEx(SOCKET sListenSocket,
                               lpOverlapped));
 }
 
-bool transmitPackets(SOCKET hSocket,
-                     LPTRANSMIT_PACKETS_ELEMENT lpPacketArray,
+ecore_rc transmitPackets(SOCKET hSocket,
+		             TRANSMIT_PACKETS_ELEMENT* lpPacketArray,
                      DWORD nElementCount,
                      DWORD nSendSize,
                      LPOVERLAPPED lpOverlapped,
                      DWORD dwFlags)
 {
-    return sys_call_with_boolean(__transmitpackets(hSocket,
+    return sys_call_with_ecore_rcean(__transmitpackets(hSocket,
                                      lpPacketArray,
                                      nElementCount,
                                      nSendSize,
@@ -337,7 +425,7 @@ bool transmitPackets(SOCKET hSocket,
                                      dwFlags));
 }
 
-bool connectEx(SOCKET s,
+ecore_rc connectEx(SOCKET s,
                const struct sockaddr* name,
                int namelen,
                PVOID lpSendBuffer,
@@ -345,7 +433,7 @@ bool connectEx(SOCKET s,
                LPDWORD lpdwBytesSent,
                LPOVERLAPPED lpOverlapped)
 {
-    return sys_call_with_boolean(__connectex(s,
+    return sys_call_with_ecore_rcean(__connectex(s,
                                name,
                                namelen,
                                lpSendBuffer,
@@ -354,12 +442,12 @@ bool connectEx(SOCKET s,
                                lpOverlapped));
 }
 
-bool disconnectEx(SOCKET hSocket,
+ecore_rc disconnectEx(SOCKET hSocket,
                   LPOVERLAPPED lpOverlapped,
                   DWORD dwFlags,
                   DWORD reserved)
 {
-    return sys_call_with_boolean(__disconnectex(hSocket,
+    return sys_call_with_ecore_rcean(__disconnectex(hSocket,
                                   lpOverlapped,
                                   dwFlags,
                                   reserved));
@@ -384,97 +472,87 @@ void getAcceptExSockaddrs(PVOID lpOutputBuffer,
                            RemoteSockaddrLength);
 }
 
-
-#endif  //__GNUC__
-
-bool stringToAddress(const char* host
-                     , struct sockaddr* addr
-                     , unsigned int* len)
+ecore_rc stringToAddress(const char* url
+                     , struct sockaddr* addr)
 {
-	const char* begin;
-    memset(addr, 0, *len);
-    addr->sa_family = AF_INET;
+	char host[50];
+	const char* ptr = url;
+	const char* end = NULL;
 
-    begin = strstr(host, "://");
-    if (NULL != begin)
-    {
-        if (begin != host && '6' == *(begin - 1))
-            addr->sa_family = AF_INET6;
+	if('[' == *ptr)
+	{
+		// 处理 ipv6的地址，格式如 [xxxx:xxxx::xxx]:port
+		addr->sa_family = AF_INET6;
 
-        begin += 3;
-    }
-    else
-    {
-        begin = host;
-    }
+		if(NULL == (end = strchr(++ptr, ']')))
+			return ECORE_RC_ERROR;
 
-    return sys_call(WSAStringToAddress((LPTSTR)begin
-									, addr->sa_family
-									, 0
-									, addr
-									, len));
+		if( ':' != *(end + 1))
+			return ECORE_RC_ERROR;
+
+
+		strncpy(host, ptr, end-ptr);
+		host[end-ptr] =0;
+		if(1 != inet_pton(AF_INET6, host, &(((struct sockaddr_in6*)addr)->sin6_addr)))
+			return ECORE_RC_ERROR;
+
+		++ end;
+
+		((struct sockaddr_in6*)addr)->sin6_port = htons(atoi(end));
+		return ECORE_RC_OK;
+	}
+	else
+	{
+		// 处理 ipv4的地址，格式如  xxx.xxx.xxx.xxx:port
+		addr->sa_family = AF_INET;
+
+		if(NULL == (end = strchr(ptr, ':')))
+			return ECORE_RC_ERROR;
+
+		strncpy(host, ptr, end-ptr);
+		host[end-ptr] =0;
+		if(1 != inet_pton(AF_INET, host, &(((struct sockaddr_in*)addr)->sin_addr)))
+			return ECORE_RC_ERROR;
+
+		++ end;
+
+		((struct sockaddr_in*)addr)->sin_port = htons(atoi(end));
+		return ECORE_RC_OK;
+	}
 }
 
-unsigned int addressToString(struct sockaddr* addr
-                     , unsigned int   len
+ecore_rc addressToString(struct sockaddr* addr
                      , const char* schema
                      , unsigned int schema_len
-                     , char* data
-					 , unsigned int data_len)
+                     , string_t* url)
 {
-	char* ptr = data;
-	if(data_len < 16)
-		return -1;
+
+	size_t len = 0;
+	const char* ptr = 0;
 
     if(NULL == schema)
-	{
-    	schema = "tcp";
-    	schema_len = 3;
-	}
+        string_assignLen(url, "tcp", 3);
     else if(-1 == schema_len)
-    {
-    	schema_len = strlen(schema);
-    }
-
-
-    if(schema_len >= data_len)
-    	return -1;
-
-	strncpy(ptr, schema, schema_len);
-	data_len -= schema_len;
-	ptr += schema_len;
+        string_assignLen(url, schema, strlen(schema));
+    else
+        string_assignLen(url, schema, schema_len);
 
 
 	if(addr->sa_family == AF_INET6)
+		string_appendLen(url, "6", 1);
+
+	string_appendLen(url, "://", 3);
+	len = string_length(url);
+
+	string_appendN(url, 0, IP_ADDRESS_LEN);
+	ptr = inet_ntop(addr->sa_family, addr, string_data(url) + len, IP_ADDRESS_LEN);
+	if(0 == ptr)
 	{
-		*ptr = '6';
-		++ptr;
-		--data_len;
+		string_truncate(url, 0);
+		return ECORE_RC_ERROR;
 	}
-
-
-    if(3 >= data_len)
-    	return -1;
-
-	memcpy(ptr, "://", 3);
-	data_len -= 3;
-	ptr += 3;
-
-	{
-
-		DWORD addressLength = data_len;
-		if (SOCKET_ERROR == WSAAddressToStringA(addr
-						, len
-						, NULL
-						, ptr
-						, &addressLength))
-			return -1;
-
-		ptr += addressLength;
-	}
-
-	*ptr = 0;
-    return ptr-data;
+	string_truncate(url, IP_ADDRESS_LEN - strlen(ptr));
+	return ECORE_RC_OK;
 }
 
 #ifdef __cplusplus

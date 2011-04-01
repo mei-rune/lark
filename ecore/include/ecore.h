@@ -32,23 +32,35 @@ extern "C" {
 
 #define ECORE_MAX_ERR_LEN 2048
 
+ typedef int ecore_rc;
+
+#define  ECORE_RC_TIMEOUT     1
+#define  ECORE_RC_OK          0
+#define  ECORE_RC_ERROR      -1
+#define  ECORE_RC_AGAIN      -2
+#define  ECORE_RC_BUSY       -3
+#define  ECORE_RC_DONE       -4
+#define  ECORE_RC_DECLINED   -5
+#define  ECORE_RC_ABORT      -6
+
+
  typedef struct _ecore{
-	// 是否正在运行中 ...
-	bool is_running;
+	// 是否正在运行中 , 1 为运行中， 0 为停止
+	int is_running;
 	// 最后一次的错误
 	string_t error;
 
 	void* internal;
  }  ecore_t;
 
-DLL_VARIABLE bool ecore_init(ecore_t* core, char* err_buf, int len);
+DLL_VARIABLE ecore_rc ecore_init(ecore_t* core, char* err_buf, int len);
 DLL_VARIABLE void ecore_finalize(ecore_t* core);
-DLL_VARIABLE int ecore_poll(ecore_t* core, int milli_seconds);
+DLL_VARIABLE ecore_rc ecore_poll(ecore_t* core, int milli_seconds);
 DLL_VARIABLE void ecore_shutdown(ecore_t* core);
-DLL_VARIABLE int ecore_at_exit(ecore_t* io, void (*cleanup_fn)(void*), void* context);
+DLL_VARIABLE ecore_rc ecore_at_exit(ecore_t* io, void (*cleanup_fn)(void*), void* context);
 
 
-DLL_VARIABLE int ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context);
+DLL_VARIABLE ecore_rc ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context);
 
 
 typedef struct _ecore_io{
@@ -62,14 +74,14 @@ typedef struct _ecore_io{
 	void* internal;
  } ecore_io_t;
 
-DLL_VARIABLE bool ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* str);
-DLL_VARIABLE bool ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io);
-DLL_VARIABLE bool ecore_io_connect(ecore_t* core, ecore_io_t*, const string_t* str);
+DLL_VARIABLE ecore_rc ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* str);
+DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io);
+DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t*, const string_t* str);
 DLL_VARIABLE void ecore_io_close(ecore_io_t* io);
 DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, unsigned int len);
-DLL_VARIABLE bool ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len);
+DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len);
 DLL_VARIABLE unsigned int ecore_io_read_some(ecore_io_t* io, void* buf, unsigned int len);
-DLL_VARIABLE bool ecore_io_read(ecore_io_t* io, void* buf, unsigned int len);
+DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, unsigned int len);
 
 
 

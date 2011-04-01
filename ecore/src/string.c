@@ -206,7 +206,7 @@ DLL_VARIABLE void string_vsprintf_(string_t* pcs, size_t begin, const char* fmt,
 {
 	int len = 0;
 
-	string_ensureLen_(pcs, pcs->len + 1024);
+	string_ensureLen_(pcs, pcs->len + 200);
 	len = vsnprintf(pcs->ptr + begin, pcs->capacity - begin, fmt, argList);
 	if(len > 0)
 	{
@@ -228,13 +228,13 @@ DLL_VARIABLE void string_vsprintf_(string_t* pcs, size_t begin, const char* fmt,
 	return;
 }
 
-DLL_VARIABLE string_t* string_vsprintf(string_t* pcs, const char*fmt, va_list argList)
+DLL_VARIABLE string_t* string_assign_vsprintf(string_t* pcs, const char*fmt, va_list argList)
 {
 	string_vsprintf_(pcs, 0, fmt, argList);
 	return pcs;
 }
 
-DLL_VARIABLE string_t* string_sprintf(string_t* pcs, const char*fmt, ...)
+DLL_VARIABLE string_t* string_assign_sprintf(string_t* pcs, const char*fmt, ...)
 {
 	va_list argList;
 	va_start(argList, fmt);
@@ -249,7 +249,7 @@ DLL_VARIABLE string_t* string_append_vprintf(string_t* pcs, const char*fmt, va_l
 	return pcs;
 }
 
-DLL_VARIABLE string_t* string_appeend_printf(string_t* pcs, const char*fmt, ...)
+DLL_VARIABLE string_t* string_append_printf(string_t* pcs, const char*fmt, ...)
 {
 	va_list argList;
 	va_start(argList, fmt);
@@ -272,7 +272,18 @@ DLL_VARIABLE string_t* string_assignLen(string_t*       pcs
 {
 	string_ensureLen_(pcs, len);
 	strncpy(pcs->ptr, s, len);
-	pcs->len += len;
+	pcs->len = len;
+	pcs->ptr[pcs->len] = '\0';
+	return pcs;
+}
+
+DLL_VARIABLE string_t* string_assignN(string_t*       pcs
+					  , char   ch
+					  , size_t n)
+{
+	string_ensureLen_(pcs, n);
+	memset(pcs->ptr, ch, n);
+	pcs->len = n;
 	pcs->ptr[pcs->len] = '\0';
 	return pcs;
 }
@@ -310,9 +321,20 @@ DLL_VARIABLE string_t* string_appendLen(string_t*   pcs
 	newLen = pcs->len + len;
 	string_ensureLen_(pcs, newLen);
 
-
-	//strncpy_s(pcs->ptr + pcs->len, (pcs->capacity) - pcs->len, s, len);
 	strncpy(pcs->ptr + pcs->len, s, len);
+	pcs->len = newLen;
+	pcs->ptr[pcs->len] = '\0';
+	return pcs;
+}
+
+DLL_VARIABLE string_t* string_appendN(string_t*   pcs
+					  ,       char                ch
+					  ,       size_t              n)
+{
+	size_t newLen = pcs->len + n;
+	string_ensureLen_(pcs, newLen);
+
+	memset(pcs->ptr + pcs->len, ch, n);
 	pcs->len = newLen;
 	pcs->ptr[pcs->len] = '\0';
 	return pcs;
@@ -480,27 +502,27 @@ DLL_VARIABLE int string_replaceAll(string_t*       pcs
 	if (0 == pcs->len)
 		return 0;
 	{
-	/* Search for first, then replace, then repeat from search pos */
-	const size_t  flen  =   strlen(f);
-	const size_t  tlen  =   string_strlen_safe_(t);
-	size_t        pos   =   0;
-	char*         p;
+		/* Search for first, then replace, then repeat from search pos */
+		const size_t  flen  =   strlen(f);
+		const size_t  tlen  =   string_strlen_safe_(t);
+		size_t        pos   =   0;
+		char*         p;
 
-	for (; NULL != (p = strstr(pcs->ptr + pos, f)); pos += tlen)
-	{
-		int rc;
+		for (; NULL != (p = strstr(pcs->ptr + pos, f)); pos += tlen)
+		{
+			int rc;
 
-		pos = (size_t)(p - pcs->ptr);
+			pos = (size_t)(p - pcs->ptr);
 
-		rc = string_replaceLen(pcs, (int)pos, flen, t, tlen);
+			rc = string_replaceLen(pcs, (int)pos, flen, t, tlen);
 
-		if (0 != rc)
-			return rc;
-	}
+			if (0 != rc)
+				return rc;
+		}
 	}
 	return 0;
 }
 
 #ifdef __cplusplus
-};
+}
 #endif

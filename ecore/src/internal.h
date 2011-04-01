@@ -83,12 +83,6 @@ int  backend_poll(ecore_t* core, int milli_seconds);
 void  backend_cleanup(ecore_t* core);
 
 
-unsigned int _address_to_string(struct sockaddr* name
-                     , unsigned int len
-                     , const char* schema
-                     , unsigned int schema_len
-                     , string_t* str);
-
 const char* _last_win_error_with_code(unsigned long code);
 const char* _last_win_error();
 const char* _last_crt_error();
