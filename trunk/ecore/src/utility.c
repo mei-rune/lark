@@ -12,32 +12,6 @@ extern "C" {
 
 
 
-/**
- * 将地址转换为 <schema>://<addr>:<port> 格式的字符串
- */
-unsigned int _address_to_string(struct sockaddr* name
-                     , unsigned int len
-                     , const char* schema
-                     , unsigned int schema_len
-                     , string_t* str)
-{
-	unsigned int ret = -1;
-
-	string_assignLen(str, "a", 100);
-	ret = addressToString(name
-			, len
-			, schema
-			, schema_len
-			, string_data(str)
-			, string_length(str));
-	if(-1 == ret)
-		return -1;
-
-	string_assignLen(str, string_data(str), ret);
-	return ret;
-}
-
-
 #ifndef HAS_INET_NTOP
 
 #define NS_INT16SZ      2

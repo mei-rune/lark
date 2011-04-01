@@ -16,7 +16,7 @@ void clientHandler(ecore_io_t* client)
 			break;
 		}
 
-		if(!ecore_io_write(client, buf, ret))
+		if(ECORE_RC_OK != ecore_io_write(client, buf, ret))
 		{
 			printf(client->core->error.ptr);
 			break;
@@ -32,13 +32,13 @@ void acceptHandler(ecore_io_t* listen_io)
 	while(listen_io->core->is_running)
 	{
 		ecore_io_t* client = (ecore_io_t*)calloc(1, sizeof(ecore_io_t));
-		if(!ecore_io_accept(listen_io, client))
+		if(ECORE_RC_OK != ecore_io_accept(listen_io, client))
 		{
 			printf(listen_io->core->error.ptr);
 			break;
 		}
 
-		if(0 != ecore_start_thread(listen_io->core, &clientHandler, client))
+		if(0 != ecore_start_thread(listen_io->core, (void (*)(void*))&clientHandler, client))
 		{
 			printf(listen_io->core->error.ptr);
 			break;
@@ -53,24 +53,30 @@ int main(int argc, char* argv[])
 	string_t address;
 	ecore_t core;
 	ecore_io_t listen_io;
-  
-	if(!ecore_init(&core,err,ECORE_MAX_ERR_LEN))
+
+	if(ECORE_RC_OK != ecore_init(&core,err,ECORE_MAX_ERR_LEN))
 	{
 	  printf(err);
 	  return 1;
 	}
 
-	if(!ecore_io_listion_at(&core, &listen_io, string_create(&address, "tcp://0.0.0.0:8111")))
+	memset(&listen_io, 0, sizeof(ecore_io_t));
+
+	if(ECORE_RC_OK != ecore_io_listion_at(&core, &listen_io, string_assign(&address, "tcp://0.0.0.0:8111")))
 	{
 		printf(core.error.ptr);
 		return 1;
 	}
-	
-	ecore_start_thread(&core,(void (*)(void*)) &acceptHandler, &listen_io);
+
+	if(ECORE_RC_OK != ecore_start_thread(&core,(void (*)(void*)) &acceptHandler, &listen_io))
+	{
+		printf(core.error.ptr);
+		return 1;
+	}
 
 	while(core.is_running)
 	{
-		int ret = ecore_poll(&core, 1000);
+		ecore_rc ret = ecore_poll(&core, 1000);
 		if(0 != ret)
 		{
 			if(ret != 1)
@@ -80,7 +86,7 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	
+
 
 	ecore_finalize(&core);
 	return 0;

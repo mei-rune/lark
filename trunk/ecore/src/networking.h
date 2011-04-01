@@ -5,11 +5,6 @@
 #include "ecore_config.h"
 #include <winsock2.h>
 #include <Mswsock.h>
-#ifdef _MSC_VER
-#include "win32/stdbool.h"
-#else
-#include <stdbool.h>
-#endif
 #include "internal.h"
 
 
@@ -28,6 +23,12 @@ typedef TRANSMIT_FILE_BUFFERS io_file_buf;
 # endif // _io_file_buf_
 
 
+#ifndef _MSC_VER
+#define SO_UPDATE_CONNECT_CONTEXT   0x7010
+#endif // _MSC_VER
+
+#define IP_ADDRESS_LEN      60
+
 enum select_mode
 {
     select_read = 1
@@ -39,7 +40,7 @@ enum select_mode
 /**
  * 初始化socket服务
  */
-bool initializeScket();
+ecore_rc initializeScket();
 
 /**
  * 关闭socket服务
@@ -49,17 +50,17 @@ void shutdownSocket();
 /**
  * 判断 socket 是否有数据可读
  */
-bool isReadable(SOCKET sock);
+int isReadable(SOCKET sock);
 
 /**
  * 判断 socket 是否可写
  */
-bool isWritable(SOCKET sock);
+int isWritable(SOCKET sock);
 
 /**
- * 设置 socket 是否阻塞
+ * 设置 socket 是否阻塞, val=1为阻塞， val=0为非阻塞
  */
-bool setBlocking(SOCKET sock, bool val);
+ecore_rc setNonblocking(SOCKET sock);
 
 /**
  * 判断并等待直到socket可以进行读(写)操作，或出错，或超时
@@ -67,12 +68,12 @@ bool setBlocking(SOCKET sock, bool val);
  * @params[ in ] mode 判断的的操作类型，请见select_mode枚举
  * @return 可以操作返回true
  */
-bool poll(SOCKET sock, const struct timeval* timeval, int select_mode);
+int poll(SOCKET sock, const struct timeval* timeval, int select_mode);
 
 /**
  * @see MSDN
  */
-bool transmitFile(SOCKET hSocket,
+ecore_rc transmitFile(SOCKET hSocket,
                   HANDLE hFile,
                   DWORD nNumberOfBytesToWrite,
                   DWORD nNumberOfBytesPerSend,
@@ -83,7 +84,7 @@ bool transmitFile(SOCKET hSocket,
 /**
  * @see MSDN
  */
-bool acceptEx(SOCKET sListenSocket,
+ecore_rc acceptEx(SOCKET sListenSocket,
               SOCKET sAcceptSocket,
               PVOID lpOutputBuffer,
               DWORD dwReceiveDataLength,
@@ -95,7 +96,7 @@ bool acceptEx(SOCKET sListenSocket,
 /**
  * @see MSDN
  */
-bool transmitPackets(SOCKET hSocket,
+ecore_rc transmitPackets(SOCKET hSocket,
                      TRANSMIT_PACKETS_ELEMENT* lpPacketArray,
                      DWORD nElementCount,
                      DWORD nSendSize,
@@ -105,7 +106,7 @@ bool transmitPackets(SOCKET hSocket,
 /**
  * @see MSDN
  */
-bool connectEx(SOCKET s,
+ecore_rc connectEx(SOCKET s,
                const struct sockaddr* name,
                int namelen,
                PVOID lpSendBuffer,
@@ -116,7 +117,7 @@ bool connectEx(SOCKET s,
 /**
  * @see MSDN
  */
-bool disconnectEx(SOCKET hSocket,
+ecore_rc disconnectEx(SOCKET hSocket,
                   LPOVERLAPPED lpOverlapped,
                   DWORD dwFlags,
                   DWORD reserved);
@@ -138,19 +139,17 @@ void getAcceptExSockaddrs(PVOID lpOutputBuffer,
  * 中 schema 与 port 是可选的,其中 schema 中最后一个字符是 '6' 时表示采用
  * IPv6格式.
  */
-bool stringToAddress(const char* host
-                     , struct sockaddr* addr
-                     , unsigned int* len);
+ecore_rc stringToAddress(const char* host
+                     , struct sockaddr* addr);
 
 /**
  * 将地址转换为 <schema>://<addr>:<port> 格式的字符串
+ * @return 成功返回转换后的字符串长度，否则返回 -1
  */
-unsigned int addressToString(struct sockaddr* name
-                     , unsigned int len
+ecore_rc addressToString(struct sockaddr* name
                      , const char* schema
-                     , unsigned int schema_len
-                     , char* data
-					 , unsigned int data_len);
+						 , unsigned int schema_len
+						 , string_t* url);
 
 
 #ifdef __cplusplus

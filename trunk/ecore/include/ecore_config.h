@@ -5,11 +5,13 @@
 /* #undef HAS_INET_NTOP */
 
 #ifdef _WIN32
+#ifndef __MINGW32__
 #if (NTDDI_VERSION >= NTDDI_VISTA)
-#define HAS_INET_NTOP 1
+# define HAS_INET_NTOP 1
+#endif
 #endif
 #else
-#define HAS_INET_NTOP 1
+# define HAS_INET_NTOP 1
 #endif
 
 /* On Windows, variables that may be in a DLL must be marked specially.  */
