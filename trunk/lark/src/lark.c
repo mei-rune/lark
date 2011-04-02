@@ -77,13 +77,14 @@ int main(int argc, char* argv[])
 	while(core.is_running)
 	{
 		ecore_rc ret = ecore_poll(&core, 1000);
-		if(0 != ret)
+		if(ECORE_RC_OK == ret)
+			continue;
+
+
+		if(ECORE_RC_TIMEOUT != ret)
 		{
-			if(ret != 1)
-			{
-				printf(core.error.ptr);
-				break;
-			}
+			printf(core.error.ptr);
+			break;
 		}
 	}
 
