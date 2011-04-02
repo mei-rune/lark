@@ -38,7 +38,7 @@ typedef struct _hashtable_iterator  hashtable_iterator_t;
  * @param[in]  cmp_func  key比较函数
  * @param[in]  free_func key和val的清理函数, 为null时将不清理
  */
-DLL_VARIABLE hashtable_t* hashtable_create(unsigned int (*hash_func)(const void *key),
+DLL_VARIABLE hashtable_t* hashtable_create(size_t (*hash_func)(const void *key),
                     int (*cmp_func)(const void *key1, const void *key2),
                     void (*free_func)(void* key, void *val), int default_size);
 
@@ -65,7 +65,7 @@ DLL_VARIABLE void hashtable_set(hashtable_t* hash, void *key, void *val);
 /**
  * 获取 hash 中对象的数目
  */
-DLL_VARIABLE unsigned int hashtable_count(hashtable_t* hash);
+DLL_VARIABLE size_t hashtable_count(hashtable_t* hash);
 
 /**
  * 创建一个 hash 的迭代器
@@ -87,9 +87,9 @@ DLL_VARIABLE bool hashtable_iterator_next(hashtable_iterator_t* it);
  */
 DLL_VARIABLE hash_entry_t* hashtable_iterator_current(hashtable_iterator_t* it);
 
-DLL_VARIABLE unsigned int hashtable_str_hash(const void *vkey);
+DLL_VARIABLE size_t hashtable_str_hash(const void *vkey);
 
-DLL_VARIABLE unsigned int hashtable_ptr_hash(const void *key);
+DLL_VARIABLE size_t hashtable_ptr_hash(const void *key);
 
 DLL_VARIABLE int hashtable_strcmp(const void *key1, const void *key2);
 

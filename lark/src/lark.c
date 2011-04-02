@@ -9,7 +9,7 @@ void clientHandler(ecore_io_t* client)
 	while(client->core->is_running)
 	{
 		char buf[1024];
-		unsigned int ret = ecore_io_read_some(client, buf, 1024);
+		size_t ret = ecore_io_read_some(client, buf, 1024);
 		if( -1 == ret)
 		{
 			printf(client->core->error.ptr);
