@@ -222,7 +222,6 @@ DLL_VARIABLE ecore_rc ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const s
 
 DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io)
 {
-	int   timeout   =   10; 
 	char data_buf[ sizeof(SOCKADDR_STORAGE)*2 + sizeof(SOCKADDR_STORAGE)*2 + 100];
 
 	iocp_command_t command;
@@ -325,24 +324,14 @@ DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepte
 		}
 	}
 
-
-     if (SOCKET_ERROR == setsockopt(accepted, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT,
-                                    (char *) &(internal->io_sock), sizeof(internal->io_sock)))
-     {
+    if (SOCKET_ERROR == setsockopt(accepted, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT,
+                                   (char *) &(internal->io_sock), sizeof(internal->io_sock)))
+    {
 			_set_last_error(listen_io->core, "接受器 '%s' 获取连接请求返回,在对 socket 句柄设置 SO_UPDATE_ACCEPT_CONTEXT 选项时发生错误 - "
 					, string_data(&listen_io->name)
 					, _last_win_error());
 			goto err;
-     }
-
-	 
-     if (SOCKET_ERROR == setsockopt(accepted, SOL_SOCKET, SO_RCVTIMEO, &timeout,sizeof(timeout)))
-     {
-			_set_last_error(listen_io->core, "接受器 '%s' 获取连接请求返回,在对 socket 句柄设置超时时间选项时发生错误 - "
-					, string_data(&listen_io->name)
-					, _last_win_error());
-			goto err;
-     }
+    }
 
 	accepted_internal = (ecore_io_internal_t*)my_malloc(sizeof(ecore_io_internal_t));
 	accepted_internal->io_sock = accepted;
