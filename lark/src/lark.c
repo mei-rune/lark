@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
 	}
 
 	memset(&listen_io, 0, sizeof(ecore_io_t));
+	memset(&address,0, sizeof(address));
 
 	if(ECORE_RC_OK != ecore_io_listion_at(&core, &listen_io, string_assign(&address, "tcp://0.0.0.0:8111")))
 	{
