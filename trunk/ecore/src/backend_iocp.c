@@ -32,9 +32,9 @@ typedef struct _backend_iocp{
 typedef struct _iocp_command {
 	OVERLAPPED invocation;
 
-	unsigned int  result_bytes_transferred;
-	void*  result_completion_key;
-	int    result_error;
+	size_t  result_bytes_transferred;
+	void*   result_completion_key;
+	int     result_error;
 
 	swap_context_t context;
 
@@ -490,7 +490,7 @@ DLL_VARIABLE void ecore_io_close(ecore_io_t* io)
 	string_finalize(&io->remote_address);
 }
 
-DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, unsigned int len)
+DLL_VARIABLE size_t ecore_io_write_some(ecore_io_t* io, const void* buf, size_t len)
 {
 	DWORD numberOfBytesWrite;
 	iocp_command_t command;
@@ -517,12 +517,12 @@ DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, u
 	return command.result_bytes_transferred;
 }
 
-DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len)
+DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, size_t len)
 {
 	const char* ptr = (const char*)buf;
 	do
 	{
-		unsigned int n = ecore_io_write_some(io, ptr, len);
+		size_t n = ecore_io_write_some(io, ptr, len);
 	    if (-1 == n)
 	        return ECORE_RC_ERROR;
 
@@ -536,7 +536,7 @@ DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, unsigned i
 	return ECORE_RC_OK;
 }
 
-DLL_VARIABLE unsigned int ecore_io_read_some(ecore_io_t* io, void* buf, unsigned int len)
+DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len)
 {
 	DWORD numberOfBytesRead;
 	iocp_command_t command;
@@ -564,12 +564,12 @@ DLL_VARIABLE unsigned int ecore_io_read_some(ecore_io_t* io, void* buf, unsigned
 	return command.result_bytes_transferred;
 }
 
-DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, unsigned int len)
+DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, size_t len)
 {
 	char* ptr = (char*)buf;
 	do
 	{
-		unsigned int n = ecore_io_read_some(io, ptr, len);
+		size_t n = ecore_io_read_some(io, ptr, len);
 	    if (-1 == n)
 	        return ECORE_RC_ERROR;
 

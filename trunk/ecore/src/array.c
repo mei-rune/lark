@@ -11,12 +11,12 @@ extern "C" {
 	struct _array
 	{
 		void **data;
-		unsigned int length;
-		unsigned int capacity;
+		size_t length;
+		size_t capacity;
 		void (*free_fn) (void *data);
 	};
 
-	DLL_VARIABLE array_t* array_new(unsigned int default_size, void (*free_fn) (void *data))
+	DLL_VARIABLE array_t* array_new(size_t default_size, void (*free_fn) (void *data))
 	{
 		array_t* arr = (array_t*)calloc(1, sizeof(array_t));
 		if(!arr) return 0;
@@ -32,7 +32,7 @@ extern "C" {
 
 	DLL_VARIABLE void array_free(array_t *arr)
 	{
-		unsigned int i;
+		size_t i;
 		for(i = 0; i < arr->length; i++)
 			if(arr->data[i]) 
 				arr->free_fn(arr->data[i]);
@@ -40,18 +40,18 @@ extern "C" {
 		free(arr);
 	}
 
-	DLL_VARIABLE void* array_get(array_t *arr, unsigned int i)
+	DLL_VARIABLE void* array_get(array_t *arr, size_t i)
 	{
 		if(i >= arr->length) return 0;
 		return arr->data[i];
 	}
 
-	void _array_expand_internal(array_t *arr, unsigned int new_size)
+	void _array_expand_internal(array_t *arr, size_t new_size)
 	{
 		if(new_size < arr->capacity) 
 			return ;
 		{
-		unsigned int max_size = arr->capacity*2;
+		size_t max_size = arr->capacity*2;
 		if(max_size < new_size)
 			max_size = new_size;
 
@@ -61,7 +61,7 @@ extern "C" {
 		}
 	}
 
-	DLL_VARIABLE void array_set(array_t *arr, unsigned int idx, void *data)
+	DLL_VARIABLE void array_set(array_t *arr, size_t idx, void *data)
 	{
 		_array_expand_internal(arr, idx);
 
@@ -80,7 +80,7 @@ extern "C" {
 		arr->data[arr->length++] = data;
 	}
 
-	DLL_VARIABLE void array_remove(array_t *arr, unsigned int idx)
+	DLL_VARIABLE void array_remove(array_t *arr, size_t idx)
 	{  
 		if(idx >= arr->length) 
 			return;
@@ -92,7 +92,7 @@ extern "C" {
 		arr->length --;
 	}
 
-	DLL_VARIABLE unsigned int array_length(array_t *arr)
+	DLL_VARIABLE size_t array_length(array_t *arr)
 	{
 		return arr->length;
 	}

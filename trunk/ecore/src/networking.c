@@ -523,7 +523,7 @@ ecore_rc stringToAddress(const char* url
 
 ecore_rc addressToString(struct sockaddr* addr
                      , const char* schema
-                     , unsigned int schema_len
+                     , size_t schema_len
                      , string_t* url)
 {
 

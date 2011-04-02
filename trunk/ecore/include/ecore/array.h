@@ -10,19 +10,19 @@ extern "C" {
 
 typedef struct _array array_t;
 
-DLL_VARIABLE array_t* array_new(unsigned int default_size, void (*free_fn) (void *data));
+DLL_VARIABLE array_t* array_new(size_t default_size, void (*free_fn) (void *data));
 
 DLL_VARIABLE void array_free(array_t *al);
 
-DLL_VARIABLE void* array_get(array_t *al, unsigned int idx);
+DLL_VARIABLE void* array_get(array_t *al, size_t idx);
 
-DLL_VARIABLE void array_set(array_t *al, unsigned int idx, void *data);
+DLL_VARIABLE void array_set(array_t *al, size_t idx, void *data);
 
 DLL_VARIABLE void array_add(array_t *al, void *data);
 
-DLL_VARIABLE void array_remove(array_t *al, unsigned int idx);
+DLL_VARIABLE void array_remove(array_t *al, size_t idx);
 
-DLL_VARIABLE unsigned int array_length(array_t *al);
+DLL_VARIABLE size_t array_length(array_t *al);
 
 #ifdef __cplusplus
 }

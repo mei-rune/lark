@@ -78,10 +78,10 @@ DLL_VARIABLE ecore_rc ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const s
 DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io);
 DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t*, const string_t* str);
 DLL_VARIABLE void ecore_io_close(ecore_io_t* io);
-DLL_VARIABLE unsigned int ecore_io_write_some(ecore_io_t* io, const void* buf, unsigned int len);
-DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, unsigned int len);
-DLL_VARIABLE unsigned int ecore_io_read_some(ecore_io_t* io, void* buf, unsigned int len);
-DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, unsigned int len);
+DLL_VARIABLE size_t ecore_io_write_some(ecore_io_t* io, const void* buf, size_t len);
+DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, size_t len);
+DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len);
+DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, size_t len);
 
 
 

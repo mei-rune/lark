@@ -21,15 +21,15 @@ typedef struct _hash_entry_internal {
 
 
 struct _hashtable {
-	unsigned int capacity;
+	size_t capacity;
 	
 	/** hash表内当前对象数. */
-	unsigned int used;
+	size_t used;
 
 	hash_entry_internal_t **entries;
 
 	/** hash 函数. */
-	unsigned int (*hash_func)(const void *key);
+	size_t (*hash_func)(const void *key);
 
 	/** 
 	 * key 的比较函数.
@@ -50,7 +50,7 @@ struct _hashtable_iterator
 	hashtable_t* table;
 
 	/** entries 的索引. */
-	unsigned int index;
+	size_t index;
 
 	/** hash_entry 链的索引. */
 	hash_entry_internal_t* next;
@@ -71,7 +71,7 @@ DLL_VARIABLE int hashtable_compare(const void *key1, const void *key2)
 	return (((unsigned long) key1) != ((unsigned long) key2));
 }
 
-DLL_VARIABLE hashtable_t* hashtable_create(unsigned int (*hash_func)(const void *key),
+DLL_VARIABLE hashtable_t* hashtable_create(size_t (*hash_func)(const void *key),
                     int (*cmp_func)(const void *key1, const void *key2),
                     void (*free_func)(void* key, void *val), int default_size)
 {
@@ -107,7 +107,7 @@ void _hashtable_set(hashtable_t* hash, void *key, void *val, hash_entry_internal
 	hash_entry_internal_t* el = NULL;
 	hash_entry_internal_t* parent_el = NULL;
 	
-	unsigned int  index = (hash->hash_func)(key) % hash->capacity;
+	size_t  index = (hash->hash_func)(key) % hash->capacity;
 	hash_entry_internal_t*  root_el = hash->entries[index];
 
 
@@ -184,7 +184,7 @@ void _hashtable_set(hashtable_t* hash, void *key, void *val, hash_entry_internal
 
 void _hashtable_resize(hashtable_t* hash)
 {
-	unsigned int old_size  = hash->capacity;
+	size_t old_size  = hash->capacity;
 	hash_entry_internal_t** old_entries = hash->entries;
 
 	// 重新分配内存
@@ -195,7 +195,7 @@ void _hashtable_resize(hashtable_t* hash)
 	hash->used = 0;
 
 	{	
-		unsigned int i;
+		size_t i;
 		for (i = 0; i < old_size; i++)
 		{
 			hash_entry_internal_t* el = old_entries[i];
@@ -233,7 +233,7 @@ DLL_VARIABLE void * hashtable_get(const hashtable_t* hash, const void *key)
 
 DLL_VARIABLE void hashtable_clear(hashtable_t* hash)
 {
-	unsigned int i;
+	size_t i;
 
 	for (i = 0; i < hash->capacity; i++) 
 	{
@@ -254,7 +254,7 @@ DLL_VARIABLE void hashtable_clear(hashtable_t* hash)
 
 
 
-DLL_VARIABLE unsigned int hashtable_count(hashtable_t* hash)
+DLL_VARIABLE size_t hashtable_count(hashtable_t* hash)
 {
 	return hash->used;
 }
@@ -310,10 +310,10 @@ DLL_VARIABLE hash_entry_t* hashtable_iterator_current(hashtable_iterator_t* it)
 	return (NULL != it->next)?&(it->next->ref):NULL;
 }
 
-DLL_VARIABLE unsigned int hashtable_str_hash(const void *vkey)
+DLL_VARIABLE size_t hashtable_str_hash(const void *vkey)
 {
-	unsigned int hash = 5381;
-	unsigned int i;
+	size_t hash = 5381;
+	size_t i;
 	const char *key = (char *) vkey;
 
 	for (i = 0; key[i]; i++)
@@ -322,9 +322,9 @@ DLL_VARIABLE unsigned int hashtable_str_hash(const void *vkey)
 	return hash;
 }
 
-DLL_VARIABLE unsigned int hashtable_ptr_hash(const void *key)
+DLL_VARIABLE size_t hashtable_ptr_hash(const void *key)
 {
-	return ((unsigned int) key);
+	return ((size_t) key);
 }
 
 #ifdef __cplusplus

@@ -148,7 +148,7 @@ ecore_rc stringToAddress(const char* host
  */
 ecore_rc addressToString(struct sockaddr* name
                      , const char* schema
-						 , unsigned int schema_len
+						 , size_t schema_len
 						 , string_t* url);
 
 
