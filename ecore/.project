@@ -32,7 +32,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>
-					<value>D:\Tools\mingw\bin\mingw32-make.exe</value>
+					<value>E:\tools\mingw\bin\mingw32-make.exe</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildLocation</key>
@@ -85,4 +85,10 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>org.eclipse.wst.common.project.facet.core.nature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>MINGW32_LOC</name>
+			<value>file:/E:/tools/mingw</value>
+		</variable>
+	</variableList>
 </projectDescription>
