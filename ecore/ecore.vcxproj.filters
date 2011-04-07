@@ -57,6 +57,9 @@
     <ClInclude Include="src\ports.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\backend_iocp.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\array.c">
@@ -81,6 +84,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\utility.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\executor.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\async.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

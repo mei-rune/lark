@@ -49,6 +49,7 @@ extern "C" {
  {
 	// 是否正在运行中 , 1 为运行中， 0 为停止
 	int is_running;
+	// 线程数
  	int threads;
  	void* internal;
  } ecore_executor_t;
@@ -97,7 +98,9 @@ DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, size_t len);
 
 DLL_VARIABLE ecore_rc ecore_async_warp(ecore_t* core, void (*fn)(void*), void* data);
 
+DLL_VARIABLE ecore_rc ecore_executor_init(ecore_executor_t* executor, char* err, size_t len);
 DLL_VARIABLE ecore_rc ecore_executor_queueTask(ecore_executor_t* executor, void (*fn)(void*), void* data);
+DLL_VARIABLE ecore_rc ecore_executor_finalize(ecore_executor_t* executor);
 
 #ifdef __cplusplus
 }

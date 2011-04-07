@@ -30,6 +30,12 @@ typedef struct _ecore_cleanup {
 	struct _ecore_cleanup* _next;
 } ecore_cleanup_t;
 
+
+typedef struct _ecore_queue
+{
+	void* backend;
+} ecore_queue_t;
+
 typedef struct _ecore_internal
 {
 	void* main_thread;
@@ -40,7 +46,7 @@ typedef struct _ecore_internal
 
 	bool is_running;
 
-	void* backend;
+	ecore_queue_t queue;
 
 } ecore_internal_t;
 
@@ -63,20 +69,43 @@ typedef struct _ecore_io_internal {
 
 } ecore_io_internal_t;
 
+
 void* my_calloc(int _NumOfElements, int _SizeOfElements);
 void  my_free(void * _Memory);
 void* my_malloc(int _Size);
 void* my_realloc(void * _Memory, int _NewSize);
 
 
-int backend_init(ecore_t* core, char* err, int len);
-int  backend_poll(ecore_t* core, int milli_seconds);
+ecore_rc backend_init(ecore_t* core, char* err, int len);
+ecore_rc  backend_poll(ecore_t* core, int milli_seconds);
 void  backend_cleanup(ecore_t* core);
 
 
-const char* _last_win_error_with_code(unsigned long code);
+
+typedef struct _ecore_future
+{
+	ecore_t* core;
+	void* thread;
+} ecore_future_t;
+
+typedef struct _ecore_task
+{
+	void (*fn)(void* data);
+	void* data;
+
+} ecore_task_t;
+
+
+
+ecore_rc ecore_queue_create(ecore_queue_t* queue, char* err, size_t len);
+ecore_rc ecore_queue_take(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds);
+ecore_rc ecore_queue_push(ecore_queue_t* queue, void (*fn)(void*), void* data);
+void ecore_queue_finalize(ecore_queue_t* queue);
+
 const char* _last_win_error();
+const char* _last_win_error_with_code(unsigned long code);
 const char* _last_crt_error();
+const char* _last_crt_error_with_code(int code);
 void _set_last_error(ecore_t* core, const char* fmt, ... );
 
 
