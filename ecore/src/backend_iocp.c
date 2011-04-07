@@ -7,9 +7,7 @@
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #include <windows.h>
-#include "internal.h"
-#include "ports.h"
-#include "networking.h"
+#include "backend_iocp.h"
 
 
 #ifdef __cplusplus
@@ -36,7 +34,7 @@ typedef struct _iocp_command {
 	void*   result_completion_key;
 	int     result_error;
 
-	swap_context_t context;
+	ecore_future_t future;
 
 } iocp_command_t;
 
@@ -131,7 +129,7 @@ ecore_rc  backend_poll(ecore_t* core, int milli_seconds){
 		asynch_result->result_bytes_transferred = bytes_transferred;
 		asynch_result->result_completion_key = (void*)completion_key;
 
-		_ecore_fire_event(&(asynch_result->context));
+		_ecore_fire_event(&(asynch_result->future));
     }
     return ECORE_RC_OK;
 }
@@ -272,7 +270,7 @@ DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepte
 		}
 	}
 
-	_ecore_wait(listen_io->core, &command.context);
+	_ecore_future_wait(listen_io->core, &command.future);
 
 	if (0 != command.result_error)
 	{
@@ -402,7 +400,7 @@ DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t* io, const stri
 		}
 	}
 
-	_ecore_wait(core, &command.context);
+	_ecore_future_wait(core, &command.future);
 
 	if (0 != command.result_error)
 	{
@@ -506,7 +504,7 @@ DLL_VARIABLE size_t ecore_io_write_some(ecore_io_t* io, const void* buf, size_t 
 		_set_last_error(io->core, "'%s' 写数据时发生错误 - %s", string_data(&io->name), _last_win_error());
 		return -1;
 	}
-	_ecore_wait(io->core, &command.context);
+	_ecore_future_wait(io->core, &command.future);
 
 	if(0 != command.result_error)
 	{
@@ -553,7 +551,7 @@ DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len)
 		return -1;
 	}
 
-	_ecore_wait(io->core, &command.context);
+	_ecore_future_wait(io->core, &command.future);
 
 	if(0 != command.result_error)
 	{

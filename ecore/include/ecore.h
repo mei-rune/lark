@@ -44,11 +44,23 @@ extern "C" {
 #define  ECORE_RC_ABORT      -6
 
 
+
+ typedef struct _ecore_executor
+ {
+	// 是否正在运行中 , 1 为运行中， 0 为停止
+	int is_running;
+ 	int threads;
+ 	void* internal;
+ } ecore_executor_t;
+
  typedef struct _ecore{
 	// 是否正在运行中 , 1 为运行中， 0 为停止
 	int is_running;
 	// 最后一次的错误
 	string_t error;
+
+	// 线程池
+	ecore_executor_t* executor;
 
 	void* internal;
  }  ecore_t;
@@ -83,10 +95,9 @@ DLL_VARIABLE ecore_rc ecore_io_write(ecore_io_t* io, const void* buf, size_t len
 DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len);
 DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, size_t len);
 
+DLL_VARIABLE ecore_rc ecore_async_warp(ecore_t* core, void (*fn)(void*), void* data);
 
-
-
-
+DLL_VARIABLE ecore_rc ecore_executor_queueTask(ecore_executor_t* executor, void (*fn)(void*), void* data);
 
 #ifdef __cplusplus
 }
