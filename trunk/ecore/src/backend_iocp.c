@@ -34,14 +34,12 @@ typedef struct _iocp_command {
 	void*   result_completion_key;
 	int     result_error;
 
-	ecore_future_t future;
+	ecore_task_t task;
 
 } iocp_command_t;
 
-ecore_rc  backend_init(ecore_t* core, char* err, int len)
+ecore_rc ecore_queue_create(ecore_queue_t* queue, char* err, size_t len)
 {
-	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
-
 	HANDLE  completion_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE,
                        0,
                        0,
@@ -53,12 +51,11 @@ ecore_rc  backend_init(ecore_t* core, char* err, int len)
     	return ECORE_RC_ERROR;
 	}
 
-	internal->backend = my_malloc(sizeof(iocp_t));
-	((iocp_t*)internal->backend)->completion_port = completion_port;
+	queue->backend = my_malloc(sizeof(iocp_t));
+	((iocp_t*)queue->backend)->completion_port = completion_port;
 
 	return ECORE_RC_OK;
 }
-
 
 /// If the function dequeues a completion packet for a successful I/O operation
 /// from the completion port, the return value is nonzero. The function stores
@@ -93,10 +90,10 @@ ecore_rc  backend_init(ecore_t* core, char* err, int len)
 ///
 /// 如一个socket句柄被关闭了，GetQueuedCompletionStatus返回ERROR_SUCCESS， lpOverlapped
 /// 不是NULL,lpNumberOfBytes等于0。
-ecore_rc  backend_poll(ecore_t* core, int milli_seconds){
+ecore_rc  ecore_queue_take(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds)
+{
 
-	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
-	iocp_t* iocp = (iocp_t*) internal->backend;
+	iocp_t* iocp = (iocp_t*) queue->backend;
     OVERLAPPED *overlapped = 0;
     DWORD bytes_transferred = 0;
 
@@ -129,18 +126,24 @@ ecore_rc  backend_poll(ecore_t* core, int milli_seconds){
 		asynch_result->result_bytes_transferred = bytes_transferred;
 		asynch_result->result_completion_key = (void*)completion_key;
 
-		_ecore_fire_event(&(asynch_result->future));
+		*data = &(asynch_result->task);
     }
     return ECORE_RC_OK;
 }
 
-void  backend_cleanup(ecore_t* core){
+ecore_rc ecore_queue_push(ecore_queue_t* queue, void (*fn)(void* data), void* data)
+{
+	iocp_command_t* command = (iocp_command_t*)my_malloc(sizeof(iocp_command_t));
+	memset(command, 0, sizeof(iocp_command_t));
+	command->task.fn = fn;
+	command->task.data = data;
+}
 
-	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
-
-    CloseHandle(((iocp_t*) internal->backend)->completion_port);
-    my_free(internal->backend);
-	internal->backend = NULL;
+void ecore_queue_finalize(ecore_queue_t* queue)
+{
+    CloseHandle(((iocp_t*) queue->backend)->completion_port);
+    my_free(queue->backend);
+	queue->backend = NULL;
 }
 
 ecore_rc _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
@@ -149,7 +152,7 @@ ecore_rc _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
 	ecore_io_internal_t* internal = NULL;
 	socket_type sock;
 
-	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->backend;
+	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->queue.backend;
 
 	if(ECORE_RC_OK != stringToAddress(url, &addr))
 	{
@@ -226,7 +229,7 @@ DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepte
 	socket_type accepted;
 	ecore_io_internal_t* accepted_internal;
 
-	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(listen_io->core->internal))->backend;
+	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(listen_io->core->internal))->queue.backend;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)listen_io->internal;
 
 	memset(&command, 0, sizeof(iocp_command_t));
@@ -356,7 +359,7 @@ DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t* io, const stri
 	socket_type connected;
 	ecore_io_internal_t* connected_internal;
 
-	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->backend;
+	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->queue.backend;
 
 	if(ECORE_RC_OK != stringToAddress(string_data(url), &addr))
 	{

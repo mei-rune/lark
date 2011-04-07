@@ -10,11 +10,6 @@
 extern "C" {
 #endif
 
-typedef struct _ecore_future
-{
-	ecore_t* core;
-	void* thread;
-} ecore_future_t;
 
 #define _ecore_fire_event(context)	SwitchToFiber((context)->thread);
 

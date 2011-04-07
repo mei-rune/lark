@@ -48,15 +48,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ECORE_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPY_ROOT)\vc2010\include;./include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;pthreadVC_vc10d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>
       </ImportLibrary>
+      <AdditionalLibraryDirectories>$(THIRDPY_ROOT)\vc2010\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -88,14 +89,17 @@
     <ClInclude Include="include\ecore\unittest.h" />
     <ClInclude Include="include\ecore_config.h" />
     <ClInclude Include="include\win32\stdbool.h" />
+    <ClInclude Include="src\backend_iocp.h" />
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="src\networking.h" />
     <ClInclude Include="src\ports.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\array.c" />
+    <ClCompile Include="src\async.c" />
     <ClCompile Include="src\backend_iocp.c" />
     <ClCompile Include="src\ecore.c" />
+    <ClCompile Include="src\executor.c" />
     <ClCompile Include="src\hash.c" />
     <ClCompile Include="src\networking.c" />
     <ClCompile Include="src\string.c" />

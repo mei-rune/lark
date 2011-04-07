@@ -108,6 +108,11 @@ const char* _last_crt_error()
 	return strerror(errno);
 }
 
+const char* _last_crt_error_with_code(int code)
+{
+	return strerror(code);
+}
+
 void _set_last_error(ecore_t* core, const char* fmt, ... )
 {
 	//ecore_internal_t* internal = (ecore_internal_t*)core->internal;
