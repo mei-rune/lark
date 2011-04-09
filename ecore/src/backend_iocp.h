@@ -11,10 +11,6 @@ extern "C" {
 #endif
 
 
-#define _ecore_fire_event(context)	SwitchToFiber((context)->thread);
-
-#define _ecore_future_wait(c, context)  (context)->core = c; (context)->thread = GetCurrentFiber(); SwitchToFiber(((ecore_internal_t*)(c)->internal)->main_thread)
-
 
 
 #ifdef __cplusplusi

@@ -122,7 +122,7 @@ void _set_last_error(ecore_t* core, const char* fmt, ... )
 	va_end(argptr);
 }
 
-DLL_VARIABLE ecore_rc ecore_init(ecore_t* c, char* err, int len)
+DLL_VARIABLE ecore_rc ecore_init(ecore_t* c, char* err, size_t len)
 {
 
 	//最后，让我们假设一个线程中有2个纤程，总结一下纤程的用法：
@@ -149,10 +149,11 @@ DLL_VARIABLE ecore_rc ecore_init(ecore_t* c, char* err, int len)
 		return ECORE_RC_ERROR;
 	}
 
-	internal = (ecore_internal_t*)my_malloc(sizeof(ecore_internal_t));
+	internal = (ecore_internal_t*)my_calloc(1, sizeof(ecore_internal_t));
 	internal->main_thread = main_thread;
 	DLINK_Initialize(&(internal->active_threads));
 	DLINK_Initialize(&(internal->delete_threads));
+	SLINK_Initialize(&(internal->cleanups));
 
 
 	c->internal = internal;
@@ -169,16 +170,36 @@ DLL_VARIABLE ecore_rc ecore_init(ecore_t* c, char* err, int len)
 	return ECORE_RC_OK;
 }
 
+DLL_VARIABLE void ecore_at_exit(ecore_t* core, void (*cleanup_fn)(void*), void* context)
+{
+	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
+	ecore_cleanup_t* cleanup = (ecore_cleanup_t*) my_malloc(sizeof(ecore_cleanup_t));
+	cleanup->cleanup_fn = cleanup_fn;
+	cleanup->context = context;
+	cleanup->_next = 0;
+	SLINK_Push(&internal->cleanups, cleanup);
+}
+
 DLL_VARIABLE  void ecore_finalize(ecore_t* core)
 {
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
+	ecore_cleanup_t* cleanup = internal->cleanups._next;
 
 	assert(DLINK_IsEmpty(&(internal->active_threads)));
 	assert(DLINK_IsEmpty(&(internal->delete_threads)));
 
-	backend_cleanup(core);
+	while(0 != cleanup)
+	{
+		ecore_cleanup_t* next = cleanup->_next;
+		(*cleanup->cleanup_fn)(cleanup->context);
+		my_free(cleanup);
+		cleanup = next;
+	}
 
+	backend_cleanup(core);
 	my_free(internal);
+	core->internal = 0;
+	string_finalize(&core->error);
 }
 
 DLL_VARIABLE ecore_rc ecore_poll(ecore_t* core, int milli_seconds)
@@ -234,6 +255,13 @@ DLL_VARIABLE ecore_rc ecore_start_thread(ecore_t* core, void (*callback_fn)(void
 	DLINK_InsertNext(&(internal->active_threads), data);
 	SwitchToFiber(data->self);
 	return ECORE_RC_OK;
+}
+
+
+
+void _ecore_future_fire(ecore_future_t* future)
+{
+	SwitchToFiber(future->thread);
 }
 
 #ifdef __cplusplus

@@ -24,7 +24,7 @@ typedef struct _string_t
 	size_t          capacity;   /*!< Number of bytes available.                                             */
 } string_t;
 
-#define STRING_T_DEFAULT  { 0, NULL, 0, 0 }
+#define STRING_T_DEFAULT  { 0, NULL, 0 }
 
 #define  string_init(s) (s)->ptr = 0; (s)->len = 0; (s)->capacity = 0
 

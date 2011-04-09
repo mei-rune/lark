@@ -32,7 +32,7 @@ void acceptHandler(ecore_io_t* listen_io)
 	while(listen_io->core->is_running)
 	{
 		ecore_io_t* client = (ecore_io_t*)calloc(1, sizeof(ecore_io_t));
-		if(ECORE_RC_OK != ecore_io_accept(listen_io, client))
+		if(ECORE_RC_OK != ecore_io_accept(listen_io, client->core, client))
 		{
 			printf(listen_io->core->error.ptr);
 			break;
