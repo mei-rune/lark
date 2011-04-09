@@ -101,6 +101,7 @@
     <ClCompile Include="src\ecore.c" />
     <ClCompile Include="src\executor.c" />
     <ClCompile Include="src\hash.c" />
+    <ClCompile Include="src\log.c" />
     <ClCompile Include="src\networking.c" />
     <ClCompile Include="src\string.c" />
     <ClCompile Include="src\unittest.c" />

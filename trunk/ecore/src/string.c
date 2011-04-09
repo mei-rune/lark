@@ -218,8 +218,8 @@ DLL_VARIABLE void string_vsprintf_(string_t* pcs, size_t begin, const char* fmt,
 	if(len <= 0)
 		return ;
 
-	string_ensureLen_(pcs, pcs->len + len+10);
-	len = vsnprintf(pcs->ptr, pcs->capacity, fmt, argList);
+	string_ensureLen_(pcs, begin + len + 10);
+	len = vsnprintf(pcs->ptr + begin, pcs->capacity - begin, fmt, argList);
 	if(len > 0)
 	{
 		pcs->len = begin + len;

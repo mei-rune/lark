@@ -27,6 +27,14 @@ typedef struct _backend_iocp{
 //	io_type_file = 3
 //};
 
+typedef struct _iocp_command iocp_command_t;
+
+struct _task_warpper
+{
+	ecore_task_t task;
+	iocp_command_t* command;
+};
+
 typedef struct _iocp_command {
 	OVERLAPPED invocation;
 
@@ -35,10 +43,13 @@ typedef struct _iocp_command {
 	int     result_error;
 
 	ecore_task_t task;
+	struct _task_warpper warpper;
+
+	ecore_future_t future;
 
 } iocp_command_t;
 
-ecore_rc ecore_queue_create(ecore_queue_t* queue, char* err, size_t len)
+ecore_rc _ecore_task_queue_create(ecore_queue_t* queue, char* err, size_t len)
 {
 	HANDLE  completion_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE,
                        0,
@@ -51,8 +62,8 @@ ecore_rc ecore_queue_create(ecore_queue_t* queue, char* err, size_t len)
     	return ECORE_RC_ERROR;
 	}
 
-	queue->backend = my_malloc(sizeof(iocp_t));
-	((iocp_t*)queue->backend)->completion_port = completion_port;
+	queue->internal = my_malloc(sizeof(iocp_t));
+	((iocp_t*)queue->internal)->completion_port = completion_port;
 
 	return ECORE_RC_OK;
 }
@@ -90,10 +101,9 @@ ecore_rc ecore_queue_create(ecore_queue_t* queue, char* err, size_t len)
 ///
 /// 如一个socket句柄被关闭了，GetQueuedCompletionStatus返回ERROR_SUCCESS， lpOverlapped
 /// 不是NULL,lpNumberOfBytes等于0。
-ecore_rc  ecore_queue_take(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds)
+ecore_rc  _ecore_task_queue_pop(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len)
 {
-
-	iocp_t* iocp = (iocp_t*) queue->backend;
+	iocp_t* iocp = (iocp_t*) queue->internal;
     OVERLAPPED *overlapped = 0;
     DWORD bytes_transferred = 0;
 
@@ -109,12 +119,14 @@ ecore_rc  ecore_queue_take(ecore_queue_t* queue, ecore_task_t** data, int milli_
         switch (GetLastError())
         {
         case WAIT_TIMEOUT:
+			snprintf(err, len, "wait timeout!");
             return ECORE_RC_TIMEOUT;
 
         case ERROR_SUCCESS:
             return ECORE_RC_OK;
 
         default:
+			snprintf(err, len, "发生系统错误 - %s", _last_win_error());
             return ECORE_RC_ERROR;
         }
     }
@@ -131,19 +143,39 @@ ecore_rc  ecore_queue_take(ecore_queue_t* queue, ecore_task_t** data, int milli_
     return ECORE_RC_OK;
 }
 
-ecore_rc ecore_queue_push(ecore_queue_t* queue, void (*fn)(void* data), void* data)
+
+void _task_run(void* data)
 {
-	iocp_command_t* command = (iocp_command_t*)my_malloc(sizeof(iocp_command_t));
-	memset(command, 0, sizeof(iocp_command_t));
-	command->task.fn = fn;
-	command->task.data = data;
+	struct _task_warpper* command = (struct _task_warpper*)data;
+	(*command->task.fn)(command->task.data);
+	my_free(command->command);
 }
 
-void ecore_queue_finalize(ecore_queue_t* queue)
+ecore_rc _ecore_task_queue_push(ecore_queue_t* queue, void (*fn)(void* data), void* data, char* err, size_t len)
 {
-    CloseHandle(((iocp_t*) queue->backend)->completion_port);
-    my_free(queue->backend);
-	queue->backend = NULL;
+	iocp_t* iocp = (iocp_t*) queue->internal;
+	iocp_command_t* command = (iocp_command_t*)my_malloc(sizeof(iocp_command_t));
+	memset(command, 0, sizeof(iocp_command_t));
+	command->task.fn = &_task_run;
+	command->task.data = &(command->warpper);
+
+	command->warpper.command = command;
+	command->warpper.task.fn = fn;
+	command->warpper.task.data = data;
+
+	if(!PostQueuedCompletionStatus(iocp->completion_port, 0, 0, &command->invocation))
+	{
+		snprintf(err, len,  "发生系统错误 - %s", _last_win_error());
+		return ECORE_RC_ERROR;
+	}
+	return ECORE_RC_OK;
+}
+
+void _ecore_task_queue_finalize(ecore_queue_t* queue)
+{
+    CloseHandle(((iocp_t*) queue->internal)->completion_port);
+    my_free(queue->internal);
+	queue->internal = NULL;
 }
 
 ecore_rc _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
@@ -152,7 +184,7 @@ ecore_rc _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
 	ecore_io_internal_t* internal = NULL;
 	socket_type sock;
 
-	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->queue.backend;
+	iocp_t* iocp = (iocp_t*) (core->in.internal);
 
 	if(ECORE_RC_OK != stringToAddress(url, &addr))
 	{
@@ -221,18 +253,21 @@ DLL_VARIABLE ecore_rc ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const s
 	return ECORE_RC_ERROR;
 }
 
-DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_io_t* accepted_io)
+DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_t* core, ecore_io_t* accepted_io)
 {
 	char data_buf[ sizeof(SOCKADDR_STORAGE)*2 + sizeof(SOCKADDR_STORAGE)*2 + 100];
 
 	iocp_command_t command;
 	socket_type accepted;
 	ecore_io_internal_t* accepted_internal;
-
-	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(listen_io->core->internal))->queue.backend;
+	
+	iocp_t* iocp = (iocp_t*) (listen_io->core->in.internal);
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)listen_io->internal;
 
 	memset(&command, 0, sizeof(iocp_command_t));
+
+	command.task.fn = (void (*)(void*))&_ecore_future_fire;
+	command.task.data = &command.future;
 
 
 	accepted = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -359,7 +394,11 @@ DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t* io, const stri
 	socket_type connected;
 	ecore_io_internal_t* connected_internal;
 
-	iocp_t* iocp = (iocp_t*) ((ecore_internal_t*)(core->internal))->queue.backend;
+	iocp_t* iocp = (iocp_t*) (core->in.internal);
+
+	memset(&command, 0, sizeof(iocp_command_t));
+	command.task.fn = (void (*)(void*))&_ecore_future_fire;
+	command.task.data = &command.future;
 
 	if(ECORE_RC_OK != stringToAddress(string_data(url), &addr))
 	{
@@ -496,6 +535,8 @@ DLL_VARIABLE size_t ecore_io_write_some(ecore_io_t* io, const void* buf, size_t 
 	iocp_command_t command;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
+	command.task.fn = (void (*)(void*))&_ecore_future_fire;
+	command.task.data = &command.future;
 
 	if(!WriteFile(internal->io_file
 		, buf
@@ -542,6 +583,8 @@ DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len)
 	iocp_command_t command;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
+	command.task.fn = (void (*)(void*))&_ecore_future_fire;
+	command.task.data = &command.future;
 
 	if(!ReadFile(internal->io_file
 		, buf
@@ -581,6 +624,40 @@ DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, size_t len)
 	while (0 != len);
 
 	return ECORE_RC_OK;
+}
+
+
+ecore_rc backend_init(ecore_t* core, char* err, size_t len)
+{
+	ecore_internal_t* internal = (ecore_internal_t*)core->internal; 
+	internal->backend = &core->in;
+	return _ecore_task_queue_create(&core->in, err, len);
+}
+
+ecore_rc  backend_poll(ecore_t* core, int milli_seconds)
+{
+	char err[ECORE_MAX_ERR_LEN + 4];
+	ecore_task_t* task = 0;
+	ecore_rc rc = _ecore_task_queue_pop(&core->in
+		, &task
+		, milli_seconds
+		, err
+		, ECORE_MAX_ERR_LEN);
+	if(ECORE_RC_OK != rc)
+	{
+		_set_last_error(core, err);
+		return rc;
+	}
+
+	(*task->fn)(task->data);
+	return ECORE_RC_OK;
+}
+
+void  backend_cleanup(ecore_t* core)
+{
+	ecore_internal_t* internal = (ecore_internal_t*)core->internal; 
+	internal->backend = 0;
+	_ecore_task_queue_finalize(&core->in);
 }
 
 

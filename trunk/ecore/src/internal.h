@@ -30,12 +30,6 @@ typedef struct _ecore_cleanup {
 	struct _ecore_cleanup* _next;
 } ecore_cleanup_t;
 
-
-typedef struct _ecore_queue
-{
-	void* backend;
-} ecore_queue_t;
-
 typedef struct _ecore_internal
 {
 	void* main_thread;
@@ -46,7 +40,7 @@ typedef struct _ecore_internal
 
 	bool is_running;
 
-	ecore_queue_t queue;
+	void* backend;
 
 } ecore_internal_t;
 
@@ -76,7 +70,7 @@ void* my_malloc(int _Size);
 void* my_realloc(void * _Memory, int _NewSize);
 
 
-ecore_rc backend_init(ecore_t* core, char* err, int len);
+ecore_rc backend_init(ecore_t* core, char* err, size_t len);
 ecore_rc  backend_poll(ecore_t* core, int milli_seconds);
 void  backend_cleanup(ecore_t* core);
 
@@ -88,6 +82,17 @@ typedef struct _ecore_future
 	void* thread;
 } ecore_future_t;
 
+
+void _ecore_future_fire(ecore_future_t* future);
+//void _ecore_future_wait(ecore_t* c, ecore_future_t* future);
+
+#define _ecore_future_wait(c, future)									\
+	(future)->core = c;													\
+	(future)->thread = GetCurrentFiber();								\
+	SwitchToFiber(((ecore_internal_t*)(c)->internal)->main_thread)		\
+
+
+
 typedef struct _ecore_task
 {
 	void (*fn)(void* data);
@@ -97,16 +102,19 @@ typedef struct _ecore_task
 
 
 
-ecore_rc ecore_queue_create(ecore_queue_t* queue, char* err, size_t len);
-ecore_rc ecore_queue_take(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds);
-ecore_rc ecore_queue_push(ecore_queue_t* queue, void (*fn)(void*), void* data);
-void ecore_queue_finalize(ecore_queue_t* queue);
+ecore_rc _ecore_task_queue_create(ecore_queue_t* queue, char* err, size_t len);
+ecore_rc _ecore_task_queue_pop(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len);
+ecore_rc _ecore_task_queue_push(ecore_queue_t* queue, void (*fn)(void*), void* data, char* err, size_t len);
+void _ecore_task_queue_finalize(ecore_queue_t* queue);
 
 const char* _last_win_error();
 const char* _last_win_error_with_code(unsigned long code);
 const char* _last_crt_error();
 const char* _last_crt_error_with_code(int code);
 void _set_last_error(ecore_t* core, const char* fmt, ... );
+
+
+
 
 
 #ifdef __cplusplusi
