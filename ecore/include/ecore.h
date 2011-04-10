@@ -30,7 +30,7 @@ extern "C" {
  typedef int socket_type;
 #endif
 
-#define ECORE_MAX_ERR_LEN 2048
+#define ECORE_MAX_ERR_LEN 512
 
  typedef int ecore_rc;
 
@@ -50,8 +50,10 @@ typedef struct _ecore_queue
  {
 	// 是否正在运行中 , 1 为运行中， 0 为停止
 	int is_running;
+
 	// 线程数
  	int threads;
+
  	void* internal;
  } ecore_executor_t;
 
@@ -73,15 +75,41 @@ typedef struct _ecore_queue
 
  }  ecore_t;
 
+ 
+typedef struct _log_message
+{
+	void* context;
+	const char* message;
+	size_t length;
+} log_message_t;
+
+typedef void (*log_fn_t)(const log_message_t** msg, size_t n);
+
+ typedef struct _ecore_system_config
+ {
+	 int log_level;
+	 log_fn_t log_callback;
+	 void* log_context;
+	 int backend_threads;
+ } ecore_system_config_t;
+
+DLL_VARIABLE ecore_rc ecore_system_init(ecore_system_config_t* config, char* err, size_t len);
+DLL_VARIABLE ecore_rc ecore_system_queueTask(void (*fn)(void*), void* data, char* err, size_t len);
+DLL_VARIABLE void ecore_system_finialize();
+ 
 DLL_VARIABLE ecore_rc ecore_init(ecore_t* core, char* err, size_t len);
-DLL_VARIABLE void ecore_finalize(ecore_t* core);
+DLL_VARIABLE void ecore_finialize(ecore_t* core);
 DLL_VARIABLE ecore_rc ecore_poll(ecore_t* core, int milli_seconds);
 DLL_VARIABLE void ecore_shutdown(ecore_t* core);
 DLL_VARIABLE void ecore_at_exit(ecore_t* core, void (*cleanup_fn)(void*), void* context);
 
 DLL_VARIABLE ecore_rc ecore_async_warp(ecore_t* core, void (*fn)(void*), void* data);
 
-DLL_VARIABLE ecore_rc ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context);
+typedef void* ecore_handle_t;
+DLL_VARIABLE ecore_rc ecore_start_thread2(ecore_t* core, void (*callback_fn)(void*), void* context, const char* name);
+DLL_VARIABLE ecore_rc ecore_start_thread(ecore_t* core, void (*callback_fn)(void*), void* context, const string_t* name);
+//DLL_VARIABLE ecore_rc ecore_start_threadex(ecore_t* core, ecore_handle_t* handle, void (*callback_fn)(void*), void* context, const char* name);
+//DLL_VARIABLE void ecore_thread_join(ecore_t* core, ecore_handle_t*);
 
 
 typedef struct _ecore_io{
@@ -95,7 +123,9 @@ typedef struct _ecore_io{
 	void* internal;
  } ecore_io_t;
 
-DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t*, const string_t* url);
+DLL_VARIABLE ecore_rc ecore_io_connect_to_url(ecore_t* core, ecore_io_t*, const char* url);
+DLL_VARIABLE ecore_rc ecore_io_connect_to(ecore_t* core, ecore_io_t*, const string_t* url);
+DLL_VARIABLE ecore_rc ecore_io_listion_at_url(ecore_t* core, ecore_io_t* io, const char* str);
 DLL_VARIABLE ecore_rc ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* url);
 DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_t* core, ecore_io_t* accepted_io);
 DLL_VARIABLE void ecore_io_close(ecore_io_t* io);
@@ -107,7 +137,7 @@ DLL_VARIABLE ecore_rc ecore_io_read(ecore_io_t* io, void* buf, size_t len);
 
 DLL_VARIABLE ecore_rc ecore_executor_init(ecore_executor_t* executor, char* err, size_t len);
 DLL_VARIABLE ecore_rc ecore_executor_queueTask(ecore_executor_t* executor, void (*fn)(void*), void* data, char* err, size_t len);
-DLL_VARIABLE void ecore_executor_finalize(ecore_executor_t* executor);
+DLL_VARIABLE void ecore_executor_finialize(ecore_executor_t* executor);
 ;
 
 #define ECORE_LOG_SYSTEM   9000
@@ -117,11 +147,11 @@ DLL_VARIABLE void ecore_executor_finalize(ecore_executor_t* executor);
 #define ECORE_LOG_WARN     5000
 #define ECORE_LOG_TRACE    4000
 #define ECORE_LOG_ALL      0000
-typedef void (*log_fn_t)(const char* msg, size_t len);
-DLL_VARIABLE void ecore_log_set_level(int level);
-DLL_VARIABLE void ecore_log_set_handler(log_fn_t callback);
-DLL_VARIABLE void ecore_log_message(int level, const char* message);
-DLL_VARIABLE void ecore_log_format(int level, const char* fmt, ...);
+
+DLL_VARIABLE void ecore_log_message(void* context, int level, const char* message);
+DLL_VARIABLE void ecore_log_format (void* context, int level, const char* fmt, ...);
+DLL_VARIABLE void ecore_log_vformat(void* context, int level, const char* fmt, va_list argList);
+
 
 #ifdef __cplusplus
 }

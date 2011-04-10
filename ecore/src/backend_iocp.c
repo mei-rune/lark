@@ -11,7 +11,8 @@
 
 
 #ifdef __cplusplus
-extern "C" {
+extern "C" 
+{
 #endif
 
 typedef struct _backend_iocp{
@@ -42,6 +43,7 @@ typedef struct _iocp_command {
 	void*   result_completion_key;
 	int     result_error;
 
+	void* data;
 	ecore_task_t task;
 	struct _task_warpper warpper;
 
@@ -49,7 +51,7 @@ typedef struct _iocp_command {
 
 } iocp_command_t;
 
-ecore_rc _ecore_task_queue_create(ecore_queue_t* queue, char* err, size_t len)
+ecore_rc _ecore_queue_create(ecore_queue_t* queue, char* err, size_t len)
 {
 	HANDLE  completion_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE,
                        0,
@@ -101,7 +103,7 @@ ecore_rc _ecore_task_queue_create(ecore_queue_t* queue, char* err, size_t len)
 ///
 /// 如一个socket句柄被关闭了，GetQueuedCompletionStatus返回ERROR_SUCCESS， lpOverlapped
 /// 不是NULL,lpNumberOfBytes等于0。
-ecore_rc  _ecore_task_queue_pop(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len)
+ecore_rc  _ecore_queue_pop(ecore_queue_t* queue, void** data, int milli_seconds, char* err, size_t len)
 {
 	iocp_t* iocp = (iocp_t*) queue->internal;
     OVERLAPPED *overlapped = 0;
@@ -138,7 +140,7 @@ ecore_rc  _ecore_task_queue_pop(ecore_queue_t* queue, ecore_task_t** data, int m
 		asynch_result->result_bytes_transferred = bytes_transferred;
 		asynch_result->result_completion_key = (void*)completion_key;
 
-		*data = &(asynch_result->task);
+		*data = asynch_result->data;
     }
     return ECORE_RC_OK;
 }
@@ -151,11 +153,40 @@ void _task_run(void* data)
 	my_free(command->command);
 }
 
-ecore_rc _ecore_task_queue_push(ecore_queue_t* queue, void (*fn)(void* data), void* data, char* err, size_t len)
+ecore_rc _ecore_queue_push(ecore_queue_t* queue, void* data, char* err, size_t len)
 {
 	iocp_t* iocp = (iocp_t*) queue->internal;
 	iocp_command_t* command = (iocp_command_t*)my_malloc(sizeof(iocp_command_t));
 	memset(command, 0, sizeof(iocp_command_t));
+
+	command->data = data;
+
+	if(!PostQueuedCompletionStatus(iocp->completion_port, 0, 0, &command->invocation))
+	{
+		snprintf(err, len,  "发生系统错误 - %s", _last_win_error());
+		return ECORE_RC_ERROR;
+	}
+	return ECORE_RC_OK;
+}
+
+void _ecore_queue_finalize(ecore_queue_t* queue)
+{
+    CloseHandle(((iocp_t*) queue->internal)->completion_port);
+    my_free(queue->internal);
+	queue->internal = NULL;
+}
+
+ecore_rc _ecore_queue_pop_task(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len)
+{
+	return _ecore_queue_pop(queue, (void**)data, milli_seconds, err, len);
+}
+
+ecore_rc _ecore_queue_push_task(ecore_queue_t* queue, void (*fn)(void* data), void* data, char* err, size_t len)
+{
+	iocp_t* iocp = (iocp_t*) queue->internal;
+	iocp_command_t* command = (iocp_command_t*)my_malloc(sizeof(iocp_command_t));
+	memset(command, 0, sizeof(iocp_command_t));
+	command->data = &command->task;
 	command->task.fn = &_task_run;
 	command->task.data = &(command->warpper);
 
@@ -244,13 +275,18 @@ ecore_rc _create_ipc(ecore_t* core, ecore_io_t* io, const char* addr)
 	return ECORE_RC_ERROR;
 }
 
+DLL_VARIABLE ecore_rc ecore_io_listion_at_url(ecore_t* core, ecore_io_t* io, const char* str)
+{
+	if(0 == strncasecmp("tcp://", str, 6))
+		return _create_listen_tcp(core, io, str + 6);
+	else if(0 == strncasecmp("ipc://", str, 6))
+		return _create_ipc(core, io, str + 6);
+	return ECORE_RC_ERROR;
+}
+
 DLL_VARIABLE ecore_rc ecore_io_listion_at(ecore_t* core, ecore_io_t* io, const string_t* str)
 {
-	if(0 == strncasecmp("tcp://", string_data(str), 6))
-		return _create_listen_tcp(core, io, string_data(str) + 6);
-	else if(0 == strncasecmp("ipc://", string_data(str), 6))
-		return _create_ipc(core, io, string_data(str) + 6);
-	return ECORE_RC_ERROR;
+	return ecore_io_listion_at_url(core, io, string_data(str));
 }
 
 DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_t* core, ecore_io_t* accepted_io)
@@ -261,11 +297,12 @@ DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_t* core, ecor
 	socket_type accepted;
 	ecore_io_internal_t* accepted_internal;
 	
-	iocp_t* iocp = (iocp_t*) (listen_io->core->in.internal);
+	iocp_t* iocp = (iocp_t*) (core->in.internal);
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)listen_io->internal;
 
 	memset(&command, 0, sizeof(iocp_command_t));
 
+	command.data = &command.task;
 	command.task.fn = (void (*)(void*))&_ecore_future_fire;
 	command.task.data = &command.future;
 
@@ -379,7 +416,7 @@ DLL_VARIABLE ecore_rc ecore_io_accept(ecore_io_t* listen_io, ecore_t* core, ecor
 		, string_data(&accepted_io->remote_address));
 
 
-	accepted_io->core = listen_io->core;
+	accepted_io->core = core;
 	accepted_io->internal = accepted_internal;
 	return ECORE_RC_OK;
 err:
@@ -387,7 +424,7 @@ err:
 	return ECORE_RC_ERROR;
 }
 
-DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t* io, const string_t* url)
+DLL_VARIABLE ecore_rc ecore_io_connect_to(ecore_t* core, ecore_io_t* io, const string_t* url)
 {
 	struct sockaddr addr;
 	iocp_command_t command;
@@ -397,6 +434,7 @@ DLL_VARIABLE ecore_rc ecore_io_connect(ecore_t* core, ecore_io_t* io, const stri
 	iocp_t* iocp = (iocp_t*) (core->in.internal);
 
 	memset(&command, 0, sizeof(iocp_command_t));
+	command.data = &command.task;
 	command.task.fn = (void (*)(void*))&_ecore_future_fire;
 	command.task.data = &command.future;
 
@@ -504,6 +542,15 @@ err:
 	return ECORE_RC_ERROR;
 }
 
+
+DLL_VARIABLE ecore_rc ecore_io_connect_to_url(ecore_t* core, ecore_io_t* io, const char* url)
+{
+	string_t str = STRING_T_DEFAULT;
+	ecore_rc rc = ecore_io_connect_to(core, io, &str);
+	string_finialize(&str);
+	return rc;
+}
+
 DLL_VARIABLE void ecore_io_close(ecore_io_t* io)
 {
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
@@ -524,9 +571,9 @@ DLL_VARIABLE void ecore_io_close(ecore_io_t* io)
 	}
 
 	my_free(internal);
-	string_finalize(&io->name);
-	string_finalize(&io->local_address);
-	string_finalize(&io->remote_address);
+	string_finialize(&io->name);
+	string_finialize(&io->local_address);
+	string_finialize(&io->remote_address);
 }
 
 DLL_VARIABLE size_t ecore_io_write_some(ecore_io_t* io, const void* buf, size_t len)
@@ -535,6 +582,7 @@ DLL_VARIABLE size_t ecore_io_write_some(ecore_io_t* io, const void* buf, size_t 
 	iocp_command_t command;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
+	command.data = &command.task;
 	command.task.fn = (void (*)(void*))&_ecore_future_fire;
 	command.task.data = &command.future;
 
@@ -583,6 +631,7 @@ DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len)
 	iocp_command_t command;
 	ecore_io_internal_t* internal = (ecore_io_internal_t*)io->internal;
 	memset(&command, 0, sizeof(iocp_command_t));
+	command.data = &command.task;
 	command.task.fn = (void (*)(void*))&_ecore_future_fire;
 	command.task.data = &command.future;
 
@@ -604,6 +653,13 @@ DLL_VARIABLE size_t ecore_io_read_some(ecore_io_t* io, void* buf, size_t len)
 		_set_last_error(io->core, "'%s' 读数据时发生错误 - %s", string_data(&io->name), _last_win_error_with_code(command.result_error));
 		return -1;
 	}
+	
+	if(0 == command.result_bytes_transferred)
+	{
+		_set_last_error(io->core, "'%s' 读数据时发现用户主动关闭连接", string_data(&io->name));
+		return 0;
+	}
+
 	return command.result_bytes_transferred;
 }
 
@@ -631,14 +687,14 @@ ecore_rc backend_init(ecore_t* core, char* err, size_t len)
 {
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal; 
 	internal->backend = &core->in;
-	return _ecore_task_queue_create(&core->in, err, len);
+	return _ecore_queue_create(&core->in, err, len);
 }
 
 ecore_rc  backend_poll(ecore_t* core, int milli_seconds)
 {
 	char err[ECORE_MAX_ERR_LEN + 4];
 	ecore_task_t* task = 0;
-	ecore_rc rc = _ecore_task_queue_pop(&core->in
+	ecore_rc rc = _ecore_queue_pop_task(&core->in
 		, &task
 		, milli_seconds
 		, err
@@ -657,7 +713,7 @@ void  backend_cleanup(ecore_t* core)
 {
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal; 
 	internal->backend = 0;
-	_ecore_task_queue_finalize(&core->in);
+	_ecore_queue_finalize(&core->in);
 }
 
 

@@ -18,20 +18,24 @@ typedef struct _ecore_executor_internal
 
 void* queue_run(void* data)
 {
+	ecore_thread_t self;
 	ecore_executor_t* executor = (ecore_executor_t*) data;
 	ecore_executor_internal_t* internal = (ecore_executor_internal_t*)
 			executor->internal;
-	char err[ECORE_MAX_ERR_LEN + 4];
+	char err[ECORE_MAX_ERR_LEN + 4] = {0, 0, 0, 0};
 
-	memset(&err, 0, sizeof(string_t));
+	memset(&self, 0, sizeof(self));
+	string_assign(&self.name, "executor thread");
+	self.self = ConvertThreadToFiberEx(&self,FIBER_FLAG_FLOAT_SWITCH);
 
 	while( executor->is_running )
 	{
 		ecore_task_t* task = 0;
-		ecore_rc rc = _ecore_task_queue_pop(&internal->queue, &task, 1000, err, ECORE_MAX_ERR_LEN);
+		ecore_rc rc = _ecore_queue_pop_task(&internal->queue, &task, 1000, err, ECORE_MAX_ERR_LEN);
 		if( ECORE_RC_OK != rc )
 		{
-			ecore_log_message(ECORE_LOG_ERROR, err);
+			if(ECORE_RC_TIMEOUT != rc)
+				ecore_log_message(0, ECORE_LOG_ERROR, err);
 			continue;
 		}
 
@@ -42,12 +46,15 @@ void* queue_run(void* data)
 	while( true )
 	{
 		ecore_task_t* task = 0;
-		ecore_rc rc = _ecore_task_queue_pop(&internal->queue, &task, 1000,  err, ECORE_MAX_ERR_LEN);
+		ecore_rc rc = _ecore_queue_pop_task(&internal->queue, &task, 1000,  err, ECORE_MAX_ERR_LEN);
 		if( ECORE_RC_OK != rc )
 			break;
 
 		(*task->fn)(task->data);
 	}
+	
+	ConvertFiberToThread();
+	return 0;
 }
 
 DLL_VARIABLE ecore_rc ecore_executor_init(ecore_executor_t* executor, char* err, size_t len)
@@ -60,27 +67,29 @@ DLL_VARIABLE ecore_rc ecore_executor_init(ecore_executor_t* executor, char* err,
 	internal->threads = 0;
 
 	executor->is_running = 1;
-	ret = _ecore_task_queue_create(&internal->queue, err, len);
+	ret = _ecore_queue_create(&internal->queue, err, len);
 	if(ECORE_RC_OK != ret)
 		return ret;
 
+	executor->internal = internal;
+
 	for(i = 0; i < executor->threads; ++ i)
 	{
-		int rc = pthread_create(&(internal->pths[i]), 0, queue_run, executor);
+		int rc = pthread_create(&(internal->pths[i]), 0, &queue_run, executor);
 		if(0 != rc)
 		{
 			snprintf(err, len, "创建线程失败 - [%d]%s", rc, _last_crt_error_with_code(rc));
 			
 			executor->is_running = 0;
 			internal->threads = i;
-			ecore_executor_finalize(executor);
+			ecore_executor_finialize(executor);
 			return ECORE_RC_ERROR;
 		}
 	}
-	return ECORE_RC_ERROR;
+	return ECORE_RC_OK;
 }
 
-DLL_VARIABLE void ecore_executor_finalize(ecore_executor_t* executor)
+DLL_VARIABLE void ecore_executor_finialize(ecore_executor_t* executor)
 {
 	int i;
 	ecore_executor_internal_t* internal = (ecore_executor_internal_t*)executor->internal;
@@ -92,7 +101,7 @@ DLL_VARIABLE void ecore_executor_finalize(ecore_executor_t* executor)
 		pthread_join(internal->pths[i], NULL);
 	}
 
-	_ecore_task_queue_finalize(&internal->queue);
+	_ecore_queue_finalize(&internal->queue);
 	my_free(internal->pths);
 	my_free(internal);
 	executor->internal = NULL;
@@ -104,7 +113,7 @@ DLL_VARIABLE ecore_rc ecore_executor_queueTask(ecore_executor_t* executor, void 
 	if(0 == executor->is_running)
 		return ECORE_RC_STOP;
 
-	return _ecore_task_queue_push(&internal->queue, fn, data, err, len); 
+	return _ecore_queue_push_task(&internal->queue, fn, data, err, len); 
 }
 
 

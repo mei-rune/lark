@@ -17,14 +17,14 @@ struct _async_warpper
 void _async_warp_run(struct _async_warpper* warpper)
 {
 	char err[ECORE_MAX_ERR_LEN + 4];
-	ecore_rc ret = _ecore_task_queue_push(&warpper->core->in
+	ecore_rc ret = _ecore_queue_push_task(&warpper->core->in
 		, &_ecore_future_fire
 		, &warpper->future
 		, err
 		, ECORE_MAX_ERR_LEN);
 
 	if(ECORE_RC_OK != ret)
-		ecore_log_message(ECORE_LOG_FATAL,err);
+		ecore_log_message(0, ECORE_LOG_FATAL,err);
 }
 
 DLL_VARIABLE ecore_rc ecore_async_warp(ecore_t* core

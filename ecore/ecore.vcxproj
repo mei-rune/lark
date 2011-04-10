@@ -104,6 +104,7 @@
     <ClCompile Include="src\log.c" />
     <ClCompile Include="src\networking.c" />
     <ClCompile Include="src\string.c" />
+    <ClCompile Include="src\thread.c" />
     <ClCompile Include="src\unittest.c" />
     <ClCompile Include="src\utility.c" />
   </ItemGroup>
