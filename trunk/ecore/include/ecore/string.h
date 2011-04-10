@@ -28,7 +28,7 @@ typedef struct _string_t
 
 #define  string_init(s) (s)->ptr = 0; (s)->len = 0; (s)->capacity = 0
 
-DLL_VARIABLE void string_finalize(string_t* pcs);
+DLL_VARIABLE void string_finialize(string_t* pcs);
 
 #define  string_data(s) (s)->ptr
 
@@ -60,9 +60,9 @@ DLL_VARIABLE string_t* string_assign_sprintf(string_t* pcs, const char* fmt, ...
 
 DLL_VARIABLE string_t* string_assign_vsprintf(string_t* pcs, const char* fmt, va_list argList);
 
-DLL_VARIABLE string_t* string_append_printf(string_t* pcs, const char* fmt, ...);
+DLL_VARIABLE string_t* string_append_sprintf(string_t* pcs, const char* fmt, ...);
 
-DLL_VARIABLE string_t* string_append_vprintf(string_t* pcs, const char* fmt, va_list argList);
+DLL_VARIABLE string_t* string_append_vsprintf(string_t* pcs, const char* fmt, va_list argList);
 
 DLL_VARIABLE string_t* string_assign(string_t* pcs, const char* s);
 

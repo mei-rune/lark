@@ -13,14 +13,32 @@
 extern "C" {
 #endif
 
+#if __GNUC__ >= 4
+# define expect(expr,value)         __builtin_expect ((expr),(value))
+# define noinline                   __attribute__ ((noinline))
+#else
+# define expect(expr,value)         (expr)
+# define noinline
+# if __STDC_VERSION__ < 199901L && __GNUC__ < 2
+#  define inline
+# endif
+#endif
+
+#define expect_false(expr) expect ((expr) != 0, 0)
+#define expect_true(expr)  expect ((expr) != 0, 1)
+
+
+
 typedef struct _ecore_thread {
+	string_t name;
 	ecore_t* core;
 	void* self;
-	void* back_thread;
+	void* join_thread;
 	void (*callback_fn)(void*);
 	void* context;
 	struct _ecore_thread* _prev;
 	struct _ecore_thread* _next;
+
 } ecore_thread_t;
 
 
@@ -33,6 +51,7 @@ typedef struct _ecore_cleanup {
 typedef struct _ecore_internal
 {
 	void* main_thread;
+	ecore_thread_t prepare_threads;
 	ecore_thread_t active_threads;
 	ecore_thread_t delete_threads;
 
@@ -102,10 +121,16 @@ typedef struct _ecore_task
 
 
 
-ecore_rc _ecore_task_queue_create(ecore_queue_t* queue, char* err, size_t len);
-ecore_rc _ecore_task_queue_pop(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len);
-ecore_rc _ecore_task_queue_push(ecore_queue_t* queue, void (*fn)(void*), void* data, char* err, size_t len);
-void _ecore_task_queue_finalize(ecore_queue_t* queue);
+extern ecore_system_config_t* g_sys_config;
+
+ecore_rc _ecore_queue_create(ecore_queue_t* queue, char* err, size_t len);
+ecore_rc _ecore_queue_pop(ecore_queue_t* queue, void** data, int milli_seconds, char* err, size_t len);
+ecore_rc _ecore_queue_push(ecore_queue_t* queue, void* data, char* err, size_t len);
+void _ecore_queue_finalize(ecore_queue_t* queue);
+
+ecore_rc _ecore_queue_pop_task(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len);
+ecore_rc _ecore_queue_push_task(ecore_queue_t* queue, void (*fn)(void*), void* data, char* err, size_t len);
+
 
 const char* _last_win_error();
 const char* _last_win_error_with_code(unsigned long code);
@@ -114,7 +139,8 @@ const char* _last_crt_error_with_code(int code);
 void _set_last_error(ecore_t* core, const char* fmt, ... );
 
 
-
+DLL_VARIABLE ecore_rc _ecore_log_init(int level, log_fn_t callback, void* default_context, char* err, size_t len);
+DLL_VARIABLE void _ecore_log_finialize();
 
 
 #ifdef __cplusplusi

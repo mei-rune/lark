@@ -2,6 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lark", "lark\lark.vcxproj", "{36A3D65E-BEAC-421F-B4FF-A49FE1566C69}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1AF905FB-66B1-45BD-B061-2D252855FE9D} = {1AF905FB-66B1-45BD-B061-2D252855FE9D}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ecore", "ecore\ecore.vcxproj", "{1AF905FB-66B1-45BD-B061-2D252855FE9D}"
 EndProject

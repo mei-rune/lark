@@ -545,13 +545,22 @@ ecore_rc addressToString(struct sockaddr* addr
 	len = string_length(url);
 
 	string_appendN(url, 0, IP_ADDRESS_LEN);
-	ptr = inet_ntop(addr->sa_family, addr, string_data(url) + len, IP_ADDRESS_LEN);
+
+	if(AF_INET6 == addr->sa_family)
+		ptr = inet_ntop(addr->sa_family,  &(((struct sockaddr_in6*)addr)->sin6_addr), string_data(url) + len, IP_ADDRESS_LEN);
+	else
+		ptr = inet_ntop(addr->sa_family,  &(((struct sockaddr_in*)addr)->sin_addr), string_data(url) + len, IP_ADDRESS_LEN);
 	if(0 == ptr)
 	{
 		string_truncate(url, 0);
 		return ECORE_RC_ERROR;
 	}
-	string_truncate(url, IP_ADDRESS_LEN - strlen(ptr));
+	string_truncate(url, len + strlen(ptr));
+
+	string_append_sprintf(url, ":%d", 
+			ntohs((AF_INET6 == addr->sa_family)?((struct sockaddr_in6*)addr)->sin6_port
+			:((struct sockaddr_in*)addr)->sin_port));
+	
 	return ECORE_RC_OK;
 }
 

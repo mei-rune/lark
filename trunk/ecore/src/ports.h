@@ -7,7 +7,13 @@
 extern "C" {
 #endif
 
-	
+#if defined(_WIN32)
+ #include <time.h>
+ int gettimeofday(struct timeval* tv);
+#else
+ #include <sys/time.h>
+#endif
+
 #ifndef HAS_INET_NTOP
 
 const char * inet_ntop(int af, const void *src, char *dst, size_t size);

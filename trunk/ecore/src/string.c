@@ -73,7 +73,7 @@ static void string_ensureLen_(string_t* pcs, size_t len)
 //}
 
 
-DLL_VARIABLE void string_finalize(string_t* pcs)
+DLL_VARIABLE void string_finialize(string_t* pcs)
 {
 	if(NULL == pcs)
 		return;
@@ -88,7 +88,7 @@ DLL_VARIABLE void string_free(string_t* pcs)
 	if(NULL == pcs)
 		return;
 
-	string_finalize(pcs);
+	string_finialize(pcs);
 	my_free(pcs);
 }
 
@@ -243,13 +243,13 @@ DLL_VARIABLE string_t* string_assign_sprintf(string_t* pcs, const char*fmt, ...)
 	return pcs;
 }
 
-DLL_VARIABLE string_t* string_append_vprintf(string_t* pcs, const char*fmt, va_list argList)
+DLL_VARIABLE string_t* string_append_vsprintf(string_t* pcs, const char*fmt, va_list argList)
 {
 	string_vsprintf_(pcs, pcs->len, fmt, argList);
 	return pcs;
 }
 
-DLL_VARIABLE string_t* string_append_printf(string_t* pcs, const char*fmt, ...)
+DLL_VARIABLE string_t* string_append_sprintf(string_t* pcs, const char*fmt, ...)
 {
 	va_list argList;
 	va_start(argList, fmt);
