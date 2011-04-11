@@ -89,7 +89,7 @@
     <ClInclude Include="include\ecore\unittest.h" />
     <ClInclude Include="include\ecore_config.h" />
     <ClInclude Include="include\win32\stdbool.h" />
-    <ClInclude Include="src\backend_iocp.h" />
+    <ClInclude Include="src\iocp.h" />
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="src\networking.h" />
     <ClInclude Include="src\ports.h" />
@@ -97,10 +97,12 @@
   <ItemGroup>
     <ClCompile Include="src\array.c" />
     <ClCompile Include="src\async.c" />
-    <ClCompile Include="src\backend_iocp.c" />
+    <ClCompile Include="src\iocp_backend.c" />
     <ClCompile Include="src\ecore.c" />
     <ClCompile Include="src\executor.c" />
     <ClCompile Include="src\hash.c" />
+    <ClCompile Include="src\iocp_io.c" />
+    <ClCompile Include="src\iocp_queue.c" />
     <ClCompile Include="src\log.c" />
     <ClCompile Include="src\networking.c" />
     <ClCompile Include="src\string.c" />
