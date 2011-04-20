@@ -38,7 +38,7 @@ DLL_VARIABLE ecore_rc ecore_async_warp(ecore_t* core
 	warpper.task.fn = fn;
 	warpper.task.data = data;
 	
-	ret = ecore_executor_queueTask(core->executor
+	ret = ecore_executor_queueJob(core->executor
 		,(void (*)(void*)) &_async_warp_run
 		, &warpper
 		, err

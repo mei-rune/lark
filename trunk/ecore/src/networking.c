@@ -493,7 +493,7 @@ ecore_rc stringToAddress(const char* url
 
 		strncpy(host, ptr, end-ptr);
 		host[end-ptr] =0;
-		if(1 != inet_pton(AF_INET6, host, &(((struct sockaddr_in6*)addr)->sin6_addr)))
+		if(1 != ecore_inet_pton(AF_INET6, host, &(((struct sockaddr_in6*)addr)->sin6_addr)))
 			return ECORE_RC_ERROR;
 
 		++ end;
@@ -511,7 +511,7 @@ ecore_rc stringToAddress(const char* url
 
 		strncpy(host, ptr, end-ptr);
 		host[end-ptr] =0;
-		if(1 != inet_pton(AF_INET, host, &(((struct sockaddr_in*)addr)->sin_addr)))
+		if(1 != ecore_inet_pton(AF_INET, host, &(((struct sockaddr_in*)addr)->sin_addr)))
 			return ECORE_RC_ERROR;
 
 		++ end;
@@ -547,9 +547,9 @@ ecore_rc addressToString(struct sockaddr* addr
 	string_appendN(url, 0, IP_ADDRESS_LEN);
 
 	if(AF_INET6 == addr->sa_family)
-		ptr = inet_ntop(addr->sa_family,  &(((struct sockaddr_in6*)addr)->sin6_addr), string_data(url) + len, IP_ADDRESS_LEN);
+		ptr = ecore_inet_ntop(addr->sa_family,  &(((struct sockaddr_in6*)addr)->sin6_addr), string_data(url) + len, IP_ADDRESS_LEN);
 	else
-		ptr = inet_ntop(addr->sa_family,  &(((struct sockaddr_in*)addr)->sin_addr), string_data(url) + len, IP_ADDRESS_LEN);
+		ptr = ecore_inet_ntop(addr->sa_family,  &(((struct sockaddr_in*)addr)->sin_addr), string_data(url) + len, IP_ADDRESS_LEN);
 	if(0 == ptr)
 	{
 		string_truncate(url, 0);

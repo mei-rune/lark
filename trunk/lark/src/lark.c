@@ -3,15 +3,16 @@
 
 #include "ecore.h"
 
-ecore_t cores[3];
+
+ecore_application_t application;
 int current = 0;
 
 ecore_t* select_core()
 {
-	return &cores[++current%3];
+	return &application.backend_cores[++current%3];
 }
 
-void clientHandler(ecore_io_t* client)
+void clientHandler(ecore_t* local_core, ecore_io_t* client)
 {
 	char buf[1024];
 	size_t ret;
@@ -49,31 +50,42 @@ void clientHandler(ecore_io_t* client)
 	free(client);
 }
 
-void acceptHandler(ecore_io_t* listen_io)
+void acceptHandler(ecore_t* local_core, const char* listen_address)
 {
+	char err[ECORE_MAX_ERR_LEN+1];
+	ecore_io_t listen_io;
 	ecore_io_t* client;
 
+	memset(&listen_io, 0, sizeof(listen_io));
+	
+	if(ECORE_RC_OK != ecore_io_listion_at_url(local_core, &listen_io, listen_address))
+	{
+		ecore_log_message(0, ECORE_LOG_FATAL, local_core->error.ptr);
+		return ;
+	}
+
+
 	ecore_log_message(0, ECORE_LOG_SYSTEM, "监听线程已启动!");
-	while(listen_io->core->is_running)
+	while(listen_io.core->is_running)
 	{
 		ecore_t* core = select_core();
 		ecore_log_message(0, ECORE_LOG_SYSTEM, "尝试监听一个连接!");
 		client = (ecore_io_t*)calloc(1, sizeof(ecore_io_t));
-		if(ECORE_RC_OK != ecore_io_accept(listen_io, core, client))
+		if(ECORE_RC_OK != ecore_io_accept(&listen_io, core, client))
 		{
-			ecore_log_message(0, ECORE_LOG_FATAL, listen_io->core->error.ptr);
+			ecore_log_message(0, ECORE_LOG_FATAL, listen_io.core->error.ptr);
 			break;
 		}
 
 		ecore_log_message(0, ECORE_LOG_SYSTEM, "监听一个连接成功!");
 
-		if(0 != ecore_start_thread(core, (void (*)(void*))&clientHandler, client, &client->name))
+		if(ECORE_RC_OK != ecore_queueTask(core, &clientHandler, client, &client->name, err, ECORE_MAX_ERR_LEN))
 		{
-			ecore_log_message(0, ECORE_LOG_FATAL, listen_io->core->error.ptr);
+			ecore_log_message(0, ECORE_LOG_FATAL, err);
 			break;
 		}
 	}
-	ecore_io_close(listen_io);
+	ecore_io_close(&listen_io);
 }
 
 void logWrite(const log_message_t** msg, size_t n)
@@ -85,104 +97,34 @@ void logWrite(const log_message_t** msg, size_t n)
 	}
 }
 
-void _loop(ecore_t* core)
-{
-	char err[ECORE_MAX_ERR_LEN+1];
-
-	if(ECORE_RC_OK != ecore_init(core,err,ECORE_MAX_ERR_LEN))
-	{
-		ecore_log_message(0, ECORE_LOG_FATAL, err);
-		return;
-	}
-
-	while(core->is_running)
-	{
-		ecore_rc ret = ecore_poll(core, 1000);
-		if(ECORE_RC_OK == ret)
-			continue;
-
-		if(ECORE_RC_TIMEOUT != ret)
-		{
-			ecore_log_message(0, ECORE_LOG_FATAL, core->error.ptr);
-			break;
-		}
-	}
-
-
-	ecore_finialize(core);
-}
 
 int main(int argc, char* argv[])
 {
-	int i;
 	char err[ECORE_MAX_ERR_LEN+1];
-	ecore_system_config_t config;
-	ecore_io_t listen_io;
-	ecore_handle_t listen_thread;
 	char listen_address[256] = "tcp://0.0.0.0:8111";
 
 
-	memset(&config, 0, sizeof(config));
-	memset(&cores, 0, sizeof(cores));
-	memset(&listen_io, 0, sizeof(listen_io));
+	memset(&application, 0, sizeof(application));
 
-	config.log_level = ECORE_LOG_ALL;
-	config.log_callback = &logWrite;
-	config.backend_threads = 7;
+	application.log_level = ECORE_LOG_ALL;
+	application.log_callback = &logWrite;
+	application.backend_threads = 7;
+	application.backend_core_num = 3;
 
-	if(ECORE_RC_OK != ecore_system_init(&config, err, ECORE_MAX_ERR_LEN))
+	if(ECORE_RC_OK != ecore_application_init(&application, err, ECORE_MAX_ERR_LEN))
+	{
+		printf(err);
+		return 1;
+	}
+	
+	if(ECORE_RC_OK != ecore_application_queueTask_c(&acceptHandler,
+		listen_address, "accept thread", err, ECORE_MAX_ERR_LEN))
 	{
 		printf(err);
 		return 1;
 	}
 
-
-
-	if(ECORE_RC_OK != ecore_init(&cores[0], err, ECORE_MAX_ERR_LEN))
-	{
-		ecore_log_message(0, ECORE_LOG_FATAL, err);
-		goto e1;
-	}
-
-	for(i =1; i < 3; ++i)
-	{
-		if(ECORE_RC_OK != ecore_system_queueTask(&_loop, &cores[i], err, ECORE_MAX_ERR_LEN))
-			ecore_log_message(0, ECORE_LOG_FATAL, err);
-	}
-
-
-	if(ECORE_RC_OK != ecore_io_listion_at_url(&cores[0], &listen_io, listen_address))
-	{
-		ecore_log_message(0, ECORE_LOG_FATAL, cores[0].error.ptr);
-		goto e2;
-	}
-
-	if(ECORE_RC_OK != ecore_start_thread2(&cores[0], (void (*)(void*)) &acceptHandler, &listen_io, "accept thread"))
-	{
-		ecore_log_message(0, ECORE_LOG_FATAL, cores[0].error.ptr);
-		goto e3;
-	}
-
-
-	while(cores[0].is_running)
-	{
-		ecore_rc ret = ecore_poll(&cores[0], 1000);
-		if(ECORE_RC_OK == ret)
-			continue;
-
-		if(ECORE_RC_TIMEOUT != ret)
-		{
-			ecore_log_message(0, ECORE_LOG_FATAL, cores[0].error.ptr);
-			break;
-		}
-	}
-e3:
-	//ecore_thread_join();
-	ecore_io_close(&listen_io);
-e2:
-	ecore_finialize(&cores[0]);
-e1:
-	ecore_system_finialize();
+	ecore_application_loop();
 	return 0;
 }
 

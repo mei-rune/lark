@@ -7,34 +7,36 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+	
 typedef struct _TestCase{
 	struct _TestCase* _next;
-	void (*func)();
+	void (*func)(out_fn_t fn);
 } TestCase;
 
 TestCase g_unittestlist = {0, 0 };
 
-DLL_VARIABLE void ADD_RUN_TEST(void (*func)())
+DLL_VARIABLE int ADD_RUN_TEST(void (*func)(out_fn_t fn))
 {
-	TestCase* tc = (TestCase*)my_malloc(sizeof(TestCase));
+	TestCase* tc = (TestCase*)malloc(sizeof(TestCase));
 	tc->func = func;
-	SLINK_Push(&g_unittestlist, tc);}
+	tc->_next = 0;
+	ecore_slink_push(&g_unittestlist, tc);
+	return 0;
+}
 
-DLL_VARIABLE int RUN_ALL_TESTS()
+DLL_VARIABLE int RUN_ALL_TESTS(void (*out_fn)(const char* buf, size_t len))
 {
 	TestCase* next = g_unittestlist._next;
 	while(0 != next)
 	{
 		TestCase* old = next;
-		next->func();
+		next->func(out_fn);
 		next = next->_next;
-		my_free(old);
+		free(old);
 	}
 
   return 0;
 }
-
 
 #ifdef __cplusplus
 }

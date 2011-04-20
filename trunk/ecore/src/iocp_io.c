@@ -55,7 +55,7 @@ ecore_rc _create_listen_tcp(ecore_t* core, ecore_io_t* io, const char* url)
 
 	if(SOCKET_ERROR == listen(sock, SOMAXCONN))
 	{
-		_set_last_error(core, "将 socket[%s] 置为监时时失败, - %s", url, _last_win_error());
+		_set_last_error(core, "将 socket[%s] 置为监听时失败, - %s", url, _last_win_error());
 		goto err;
 	}
 

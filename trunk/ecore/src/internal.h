@@ -32,8 +32,8 @@ typedef struct _ecore_thread {
 	string_t name;
 	ecore_t* core;
 	void* self;
-	void* join_thread;
-	void (*callback_fn)(void*);
+	//void* join_thread;
+	void (*callback_fn)(ecore_t*, void*);
 	void* context;
 	struct _ecore_thread* _prev;
 	struct _ecore_thread* _next;
@@ -118,18 +118,21 @@ typedef struct _ecore_task
 
 } ecore_task_t;
 
-
-
-extern ecore_system_config_t* g_sys_config;
-
 ecore_rc _ecore_queue_create(ecore_queue_t* queue, char* err, size_t len);
 ecore_rc _ecore_queue_pop(ecore_queue_t* queue, void** data, int milli_seconds, char* err, size_t len);
+#ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
+ecore_rc _ecore_queue_pop_some(ecore_queue_t* queue, void** data, size_t count, size_t* num, int milli_seconds, char* err, size_t len);
+#endif
 ecore_rc _ecore_queue_push(ecore_queue_t* queue, void* data, char* err, size_t len);
 void _ecore_queue_finalize(ecore_queue_t* queue);
 
 ecore_rc _ecore_queue_pop_task(ecore_queue_t* queue, ecore_task_t** data, int milli_seconds, char* err, size_t len);
+#ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
+ecore_rc _ecore_queue_pop_some_task(ecore_queue_t* queue, ecore_task_t** data, size_t count, size_t* num, int milli_seconds, char* err, size_t len);
+#endif
 ecore_rc _ecore_queue_push_task(ecore_queue_t* queue, void (*fn)(void*), void* data, char* err, size_t len);
 
+ecore_rc _ecore_queueTask(ecore_t* core, void (*callback_fn)(ecore_t*, void*), void* context, const char* name, size_t name_len, char* err, size_t err_len);
 
 const char* _last_win_error();
 const char* _last_win_error_with_code(unsigned long code);
@@ -141,6 +144,29 @@ void _set_last_error(ecore_t* core, const char* fmt, ... );
 DLL_VARIABLE ecore_rc _ecore_log_init(int level, log_fn_t callback, void* default_context, char* err, size_t len);
 DLL_VARIABLE void _ecore_log_finialize();
 
+
+
+struct ecore_io_wrapper
+{
+	ecore_io_t io;
+	struct ecore_io_wrapper* _next;
+	struct ecore_io_wrapper* _prev;
+};
+
+
+typedef struct _ecore_application_internal
+{
+	ecore_thread_t* self_thread;
+
+	ecore_application_t* application;
+	ecore_executor_t* executor;
+
+	//ÊÇ·ñÉ¾³ý backend_cores
+	int delete_cores;
+
+} ecore_application_internal_t;
+
+extern ecore_application_t* g_application;
 
 #ifdef __cplusplusi
 }

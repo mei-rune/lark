@@ -107,7 +107,7 @@ DLL_VARIABLE void ecore_executor_finialize(ecore_executor_t* executor)
 	executor->internal = NULL;
 }
 
-DLL_VARIABLE ecore_rc ecore_executor_queueTask(ecore_executor_t* executor, void (*fn)(void*), void* data, char* err, size_t len)
+DLL_VARIABLE ecore_rc ecore_executor_queueJob(ecore_executor_t* executor, void (*fn)(void*), void* data, char* err, size_t len)
 {
 	ecore_executor_internal_t* internal = (ecore_executor_internal_t*)executor->internal;
 	if(0 == executor->is_running)

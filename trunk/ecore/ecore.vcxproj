@@ -40,6 +40,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IgnoreImportLibrary>false</IgnoreImportLibrary>
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)..\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -48,16 +49,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ECORE_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(THIRDPY_ROOT)\vc2010\include;./include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(USR_PATH)\vc2010\include;./include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Ws2_32.lib;pthreadVC_vc10d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(USR_PATH)\vc2010\lib</AdditionalLibraryDirectories>
       <ImportLibrary>
       </ImportLibrary>
-      <AdditionalLibraryDirectories>$(THIRDPY_ROOT)\vc2010\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -95,6 +96,7 @@
     <ClInclude Include="src\ports.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\application.c" />
     <ClCompile Include="src\array.c" />
     <ClCompile Include="src\async.c" />
     <ClCompile Include="src\iocp_backend.c" />
