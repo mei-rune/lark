@@ -86,7 +86,6 @@ ecore_rc  _ecore_queue_pop(ecore_queue_t* queue, void** data, int milli_seconds,
         switch (GetLastError())
         {
         case WAIT_TIMEOUT:
-			snprintf(err, len, "wait timeout!");
             return ECORE_RC_TIMEOUT;
 
         case ERROR_SUCCESS:
@@ -110,6 +109,53 @@ ecore_rc  _ecore_queue_pop(ecore_queue_t* queue, void** data, int milli_seconds,
     return ECORE_RC_OK;
 }
 
+#ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
+
+ecore_rc  _ecore_queue_pop_some(ecore_queue_t* queue, void** data, size_t count, size_t* num, int milli_seconds, char* err, size_t len)
+{
+	iocp_t* iocp = (iocp_t*) queue->internal;
+	ULONG numEntriesRemoved = 0;
+    OVERLAPPED_ENTRY *overlapped_entries = (OVERLAPPED_ENTRY*)my_calloc(count, sizeof(OVERLAPPED_ENTRY));
+
+    if (GetQueuedCompletionStatusEx(iocp->completion_port,
+				  overlapped_entries,
+                  count,
+                  &numEntriesRemoved,
+                  milli_seconds,
+				  FALSE))
+    {
+        switch (GetLastError())
+        {
+        case WAIT_TIMEOUT:
+            return ECORE_RC_TIMEOUT;
+
+        case ERROR_SUCCESS:
+            return ECORE_RC_OK;
+
+        default:
+			snprintf(err, len, "发生系统错误 - %s", _last_win_error());
+            return ECORE_RC_ERROR;
+        }
+    }
+    else
+    {
+		ULONG i;
+		for( i = 0; i < numEntriesRemoved; ++ i)
+		{
+			iocp_command_t *asynch_result = (iocp_command_t*)(((char*)overlapped_entries[i].lpOverlapped) - offsetof(iocp_command_t,invocation));
+
+			asynch_result->result_error = 0;
+			asynch_result->result_bytes_transferred = overlapped_entries[i].dwNumberOfBytesTransferred;
+			asynch_result->result_completion_key = (void*)overlapped_entries[i].lpCompletionKey;
+
+			data[i] = asynch_result->data;
+		}
+		*num = numEntriesRemoved;
+    }
+    return ECORE_RC_OK;
+}
+
+#endif
 
 void _task_run(void* data)
 {
@@ -146,6 +192,13 @@ ecore_rc _ecore_queue_pop_task(ecore_queue_t* queue, ecore_task_t** data, int mi
 	return _ecore_queue_pop(queue, (void**)data, milli_seconds, err, len);
 }
 
+#ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
+ecore_rc _ecore_queue_pop_some_task(ecore_queue_t* queue, ecore_task_t** data, size_t count, size_t* num, int milli_seconds, char* err, size_t len)
+{
+	return _ecore_queue_pop_some(queue, (void**)data, count, num, milli_seconds, err, len);
+}
+#endif
+
 ecore_rc _ecore_queue_push_task(ecore_queue_t* queue, void (*fn)(void* data), void* data, char* err, size_t len)
 {
 	iocp_t* iocp = (iocp_t*) queue->internal;
@@ -166,7 +219,6 @@ ecore_rc _ecore_queue_push_task(ecore_queue_t* queue, void (*fn)(void* data), vo
 	}
 	return ECORE_RC_OK;
 }
-
 
 #ifdef __cplusplus
 }

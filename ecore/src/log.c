@@ -43,16 +43,53 @@ const char* _get_log_level_name(int level)
 void*  _log_loop(void* data)
 {
 	char err[ECORE_MAX_ERR_LEN + 4];
-	log_message_internal_t* internal = 0;
-	log_message_t* msg  = 0;
+	
+#ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
+	log_message_internal_t* internal[100];
+	size_t count = 100;
+	size_t num;
+#else
+	log_message_internal_t* internal;
+	log_message_t* msg;
+#endif
+	ecore_rc rc;
+	
 
 	memset(err, 0, sizeof(err));
 
 
 	while(1 == g_log_is_running)
 	{
+		err[0] = 0;
+#ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
+		num = 0;
+		rc = _ecore_queue_pop_some(&g_log_queue, (void**)internal, count, &num, 1000, err, ECORE_MAX_ERR_LEN);
+		
+		if(ECORE_RC_TIMEOUT == rc)
+			continue;
 
-		ecore_rc rc = _ecore_queue_pop(&g_log_queue, &internal, 1000, err, ECORE_MAX_ERR_LEN);
+		if( ECORE_RC_OK != rc)
+		{
+			internal[0] = (log_message_internal_t*)my_malloc(sizeof(log_message_internal_t));
+			internal[0]->data = 0;
+			internal[0]->log.context = g_log_context;
+			internal[0]->log.message = err;
+			internal[0]->log.length = strlen(err);
+			num = 1;
+		}
+
+		while(0 != (num--))
+		{
+			log_message_t* msg = &(internal[num]->log);
+			(*g_log_callback)(&msg, 1);
+
+			if(0 != internal[num]->data)
+				my_free(internal[num]->data);
+			my_free(internal[num]);
+			internal[num] = 0;
+		}
+#else
+		rc = _ecore_queue_pop(&g_log_queue, &internal, 1000, err, ECORE_MAX_ERR_LEN);
 		
 		if(ECORE_RC_TIMEOUT == rc)
 			continue;
@@ -73,6 +110,8 @@ void*  _log_loop(void* data)
 			my_free(internal->data);
 		my_free(internal);
 		internal = 0;
+#endif
+
 	}
 	return 0;
 }

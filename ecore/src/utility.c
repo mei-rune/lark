@@ -28,7 +28,6 @@ int gettimeofday(struct timeval* tv)
 #endif
 
 
-#ifndef HAS_INET_NTOP
 
 #define NS_INT16SZ      2
 #define NS_INADDRSZ     4
@@ -45,7 +44,7 @@ static int inet_pton6(const char *src, unsigned char *dst);
 
 
 
-const char * inet_ntop(int af, const void *src, char *dst, size_t size)
+const char * ecore_inet_ntop(int af, const void *src, char *dst, size_t size)
 {
 	switch (af) {
 	case AF_INET:
@@ -164,7 +163,7 @@ const char * inet_ntop6(const unsigned char *src, char *dst, size_t size)
 	return (dst);
 }
 
-int inet_pton(int af,
+int ecore_inet_pton(int af,
 	  const char *src,
 	  void *dst)
 {
@@ -297,8 +296,6 @@ int inet_pton6(const char *src, unsigned char *dst)
 	memcpy(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }
-
-#endif //
 
 #ifdef __cplusplus
 }

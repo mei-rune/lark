@@ -15,10 +15,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+	
 extern int Test_Flags_Verbose;
 
-#define WRITE_TO_STDERR(buf, len) fwrite(buf, 1, len, stderr)
+
+#define WRITE_TO_STDERR(buf, len) if(0 != out_fn)LogPrintf(buf, len); else fwrite(buf, 1, len, stderr)
 
 #define CHECK(condition)                                                \
   do {                                                                  \
@@ -111,46 +112,40 @@ extern int Test_Flags_Verbose;
 
 enum LogSeverity {INFO = -1, WARNING = -2, ERROR = -3, FATAL = -4};
 
-void LogPrintf(int severity, const char* pat, va_list ap)
-{
-  char buf[600];
-  vsnprintf(buf, sizeof(buf), pat, ap);
-  if (buf[0] != '\0' && buf[strlen(buf)-1] != '\n') {
-    assert(strlen(buf)+1 < sizeof(buf));
-    strcat(buf, "\n");
-  }
-  WRITE_TO_STDERR(buf, strlen(buf));
-  if ((severity) == FATAL)
-    abort();
-}
+
 
 #define VLOG_IS_ON(severity) (Test_Flags_Verbose >= severity)
 
 
-#define LOG_PRINTF(severity, pat) do {          \
-  if (VLOG_IS_ON(severity)) {                   \
-    va_list ap;                                 \
-    va_start(ap, pat);                          \
-    LogPrintf(severity, pat, ap);               \
-    va_end(ap);                                 \
-  }                                             \
+#define LOG_PRINTF(severity, pat) do {							\
+  if (VLOG_IS_ON(severity)) {									\
+    va_list ap;													\
+    va_start(ap, pat);											\
+    char buf[600];												\
+	vsnprintf(buf, sizeof(buf), pat, ap);						\
+	if (buf[0] != '\0' && buf[strlen(buf)-1] != '\n') {			\
+		assert(strlen(buf)+1 < sizeof(buf));					\
+		strcat(buf, "\n");										\
+	}															\
+	WRITE_TO_STDERR(buf, strlen(buf));							\
+	if ((severity) == FATAL)									\
+		abort();												\
+    va_end(ap);													\
+  }																\
 } while (0)
 
 
 
 
+typedef void (*out_fn_t)(const char* buf, size_t len);
 
-#define TEST(a, b)                                      \
-  struct Test_##a##_##b {                               \
-    Test_##a##_##b() { ADD_RUN_TEST(&Run); }			\
-    static void Run();                                  \
-  };                                                    \
-  static Test_##a##_##b g_test_##a##_##b;               \
-  void Test_##a##_##b::Run()
+#define TEST(a, b)												\
+void test_##a##_##b##_run(out_fn_t out_fn);						\
+int test_##a##_##b##_var = ADD_RUN_TEST(&test_##a##_##b##_run);	\
+void test_##a##_##b##_run(out_fn_t out_fn)
 
-DLL_VARIABLE void ADD_RUN_TEST(void (*func)());
-DLL_VARIABLE int RUN_ALL_TESTS();
-
+DLL_VARIABLE int ADD_RUN_TEST(void (*func)(out_fn_t fn));
+DLL_VARIABLE int RUN_ALL_TESTS(void (*out_fn)(const char* buf, size_t len));
 
 #ifdef __cplusplus
 }

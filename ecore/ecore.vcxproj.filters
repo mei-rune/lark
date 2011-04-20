@@ -104,5 +104,8 @@
     <ClCompile Include="src\iocp_backend.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\application.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
