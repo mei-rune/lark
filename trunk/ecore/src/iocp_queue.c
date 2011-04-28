@@ -11,7 +11,7 @@
 
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 {
 #endif
 
@@ -157,13 +157,6 @@ ecore_rc  _ecore_queue_pop_some(ecore_queue_t* queue, void** data, size_t count,
 
 #endif
 
-void _task_run(void* data)
-{
-	struct _task_wrapper* command = (struct _task_wrapper*)data;
-	(*command->task.fn)(command->task.data);
-	my_free(command->command);
-}
-
 ecore_rc _ecore_queue_push(ecore_queue_t* queue, void* data, char* err, size_t len)
 {
 	iocp_t* iocp = (iocp_t*) queue->internal;
@@ -199,13 +192,21 @@ ecore_rc _ecore_queue_pop_some_task(ecore_queue_t* queue, ecore_task_t** data, s
 }
 #endif
 
+
+void _task_wrapper_run(void* data)
+{
+	struct _task_wrapper* command = (struct _task_wrapper*)data;
+	(*command->task.fn)(command->task.data);
+	my_free(command->command);
+}
+
 ecore_rc _ecore_queue_push_task(ecore_queue_t* queue, void (*fn)(void* data), void* data, char* err, size_t len)
 {
 	iocp_t* iocp = (iocp_t*) queue->internal;
 	iocp_command_t* command = (iocp_command_t*)my_malloc(sizeof(iocp_command_t));
 	memset(command, 0, sizeof(iocp_command_t));
 	command->data = &command->task;
-	command->task.fn = &_task_run;
+	command->task.fn = &_task_wrapper_run;
 	command->task.data = &(command->warpper);
 
 	command->warpper.command = command;

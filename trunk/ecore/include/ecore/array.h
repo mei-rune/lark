@@ -2,7 +2,6 @@
 #define _ecore_array_h_ 1
 
 #include "ecore_config.h"
-#include "internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,10 +24,10 @@ extern "C" {
 //
 //DLL_VARIABLE size_t array_length(array_t *al);
 
-	
+
 void * array_realloc (int elem, void *base, int *cur, int cnt);
 
-#define EMPTY 
+#define EMPTY
 
 
 #define array_init_zero(base,count)	\

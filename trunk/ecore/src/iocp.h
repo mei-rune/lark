@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-	
+
 typedef struct _backend_iocp{
     // Íê³É¶Ë¿Ú¾ä±ú
     HANDLE completion_port;
@@ -24,7 +24,7 @@ struct _task_wrapper
 	iocp_command_t* command;
 };
 
-typedef struct _iocp_command {
+struct _iocp_command {
 	OVERLAPPED invocation;
 
 	size_t  result_bytes_transferred;
@@ -37,7 +37,7 @@ typedef struct _iocp_command {
 
 	ecore_future_t future;
 
-} iocp_command_t;
+};
 
 
 #ifdef __cplusplusi

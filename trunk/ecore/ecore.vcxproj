@@ -55,7 +55,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;pthreadVC_vc10d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(USR_PATH)\vc2010\lib</AdditionalLibraryDirectories>
       <ImportLibrary>
       </ImportLibrary>
@@ -94,6 +94,7 @@
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="src\networking.h" />
     <ClInclude Include="src\ports.h" />
+    <ClInclude Include="src\pthread_windows.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.c" />
@@ -107,6 +108,7 @@
     <ClCompile Include="src\iocp_queue.c" />
     <ClCompile Include="src\log.c" />
     <ClCompile Include="src\networking.c" />
+    <ClCompile Include="src\pthread_windows.c" />
     <ClCompile Include="src\string.c" />
     <ClCompile Include="src\thread.c" />
     <ClCompile Include="src\unittest.c" />

@@ -14,17 +14,7 @@
 extern "C" {
 #endif
 
-#if __GNUC__
 
-#ifndef FIBER_FLAG_FLOAT_SWITCH
-#define FIBER_FLAG_FLOAT_SWITCH 0x1     // context switch floating point
-#endif
-
-#ifndef ConvertThreadToFiberEx
-#define ConvertThreadToFiberEx(lpParameter,dwFlags)  ConvertThreadToFiber(lpParameter)
-#endif
-
-#endif
 
 void* my_calloc(int _NumOfElements, int _SizeOfElements)
 {
@@ -174,7 +164,7 @@ ecore_rc _ecore_poll(ecore_t* core, int milli_seconds)
 	while(!ecore_dlink_is_empty(&(internal->prepare_threads)))
 	{
 		ecore_thread_t* thread = internal->prepare_threads._next;
-		
+
 		ecore_dlink_remove(thread);
 		ecore_dlink_insert_at_next(&(internal->active_threads), thread);
 		SwitchToFiber(thread->self);
@@ -206,7 +196,7 @@ DLL_VARIABLE ecore_rc ecore_loop(ecore_t* core, int milli_seconds)
 		if(ECORE_RC_TIMEOUT != ret)
 			break;
 	}
-	
+
 	if(ECORE_RC_TIMEOUT == ret)
 		return ECORE_RC_OK;
 
@@ -221,7 +211,7 @@ DLL_VARIABLE  void ecore_finialize(ecore_t* core)
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
 	ecore_cleanup_t* cleanup = internal->cleanups._next;
 
-	
+
 	while(true)
 	{
 		ecore_rc ret = _ecore_poll(core, 1000);

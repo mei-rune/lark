@@ -1,12 +1,18 @@
 
 #include "ecore_config.h"
-#include "pthread.h"
+#ifdef _MSC_VER
+#include "pthread_windows.h"
+#else
+#include <pthread.h>
+#endif
 #include "internal.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 
 typedef struct _ecore_executor_internal
 {
@@ -16,7 +22,7 @@ typedef struct _ecore_executor_internal
 } ecore_executor_internal_t;
 
 
-void* queue_run(void* data)
+void* _ecore_executor_routine(void* data)
 {
 	ecore_thread_t self;
 	ecore_executor_t* executor = (ecore_executor_t*) data;
@@ -52,8 +58,10 @@ void* queue_run(void* data)
 
 		(*task->fn)(task->data);
 	}
-	
+
 	ConvertFiberToThread();
+
+	pthread_exit((void*)0);
 	return 0;
 }
 
@@ -75,11 +83,11 @@ DLL_VARIABLE ecore_rc ecore_executor_init(ecore_executor_t* executor, char* err,
 
 	for(i = 0; i < executor->threads; ++ i)
 	{
-		int rc = pthread_create(&(internal->pths[i]), 0, &queue_run, executor);
+		int rc = pthread_create(&(internal->pths[i]), 0, &_ecore_executor_routine, executor);
 		if(0 != rc)
 		{
 			snprintf(err, len, "创建线程失败 - [%d]%s", rc, _last_crt_error_with_code(rc));
-			
+
 			executor->is_running = 0;
 			internal->threads = i;
 			ecore_executor_finialize(executor);
@@ -94,7 +102,7 @@ DLL_VARIABLE void ecore_executor_finialize(ecore_executor_t* executor)
 	int i;
 	ecore_executor_internal_t* internal = (ecore_executor_internal_t*)executor->internal;
 
-	
+
 	executor->is_running = 0;
 	for( i = 0; i < internal->threads; ++ i)
 	{
@@ -113,7 +121,7 @@ DLL_VARIABLE ecore_rc ecore_executor_queueJob(ecore_executor_t* executor, void (
 	if(0 == executor->is_running)
 		return ECORE_RC_STOP;
 
-	return _ecore_queue_push_task(&internal->queue, fn, data, err, len); 
+	return _ecore_queue_push_task(&internal->queue, fn, data, err, len);
 }
 
 

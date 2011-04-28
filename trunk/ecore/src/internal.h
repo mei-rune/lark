@@ -11,6 +11,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if __GNUC__
+ #ifndef FIBER_FLAG_FLOAT_SWITCH
+ #define FIBER_FLAG_FLOAT_SWITCH 0x1     // context switch floating point
+ #endif
+ #ifndef ConvertThreadToFiberEx
+ #define ConvertThreadToFiberEx(lpParameter,dwFlags)  ConvertThreadToFiber(lpParameter)
+ #endif
+#endif
 
 #if __GNUC__ >= 4
 # define expect(expr,value)         __builtin_expect ((expr),(value))
@@ -142,7 +150,7 @@ void _set_last_error(ecore_t* core, const char* fmt, ... );
 
 
 DLL_VARIABLE ecore_rc _ecore_log_init(int level, log_fn_t callback, void* default_context, char* err, size_t len);
-DLL_VARIABLE void _ecore_log_finialize();
+//DLL_VARIABLE void _ecore_log_finialize();
 
 
 
@@ -165,8 +173,6 @@ typedef struct _ecore_application_internal
 	int delete_cores;
 
 } ecore_application_internal_t;
-
-extern ecore_application_t* g_application;
 
 #ifdef __cplusplusi
 }

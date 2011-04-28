@@ -50,6 +50,7 @@
 								<option defaultValue="true" id="gnu.c.link.mingw.so.debug.option.shared.2105785844" name="Shared (-shared)" superClass="gnu.c.link.mingw.so.debug.option.shared" valueType="boolean"/>
 								<option id="gnu.c.link.option.libs.86478991" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="ws2_32"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.c.link.option.implname.934370763" name="Import Library name (-Wl,--out-implib=)" superClass="gnu.c.link.option.implname" value="libecore.a" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.352621816" superClass="cdt.managedbuild.tool.gnu.c.linker.input">

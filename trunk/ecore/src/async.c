@@ -18,7 +18,7 @@ void _async_warp_run(struct _async_warpper* warpper)
 {
 	char err[ECORE_MAX_ERR_LEN + 4];
 	ecore_rc ret = _ecore_queue_push_task(&warpper->core->in
-		, &_ecore_future_fire
+		, (void (*)(void*))&_ecore_future_fire
 		, &warpper->future
 		, err
 		, ECORE_MAX_ERR_LEN);
@@ -37,7 +37,7 @@ DLL_VARIABLE ecore_rc ecore_async_warp(ecore_t* core
 	warpper.core = core;
 	warpper.task.fn = fn;
 	warpper.task.data = data;
-	
+
 	ret = ecore_executor_queueJob(core->executor
 		,(void (*)(void*)) &_async_warp_run
 		, &warpper
