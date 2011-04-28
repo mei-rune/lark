@@ -40,7 +40,7 @@ extern "C" {
 #define  ECORE_RC_STOP       -2
 #define  ECORE_RC_SYSTEM     -3
 
- 
+
 typedef struct _ecore_queue
 {
 	void* internal;
@@ -60,7 +60,7 @@ typedef struct _ecore_queue
  typedef struct _ecore{
 	// 是否正在运行中 , 1 为运行中， 0 为停止
 	int is_running;
-	
+
 	// 最后一次的错误
 	string_t error;
 
@@ -75,8 +75,8 @@ typedef struct _ecore_queue
 
  }  ecore_t;
 
- 
- 
+
+
 DLL_VARIABLE ecore_rc ecore_init(ecore_t* core, char* err, size_t len);
 DLL_VARIABLE void ecore_finialize(ecore_t* core);
 DLL_VARIABLE ecore_rc ecore_loop(ecore_t* core, int milli_seconds);
@@ -121,7 +121,7 @@ typedef struct _log_message
 	size_t length;
 } log_message_t;
 
-typedef void (*log_fn_t)(const log_message_t** msg, size_t n);
+typedef void (*log_fn_t)(const log_message_t * const * msg, size_t n);
 
 #define ECORE_LOG_SYSTEM   9000
 #define ECORE_LOG_FATAL    8000

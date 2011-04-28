@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ecore/array.h"
+#include "internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +35,7 @@ extern "C" {
 	//{
 	//	size_t i;
 	//	for(i = 0; i < arr->length; i++)
-	//		if(arr->data[i]) 
+	//		if(arr->data[i])
 	//			arr->free_fn(arr->data[i]);
 	//	free(arr->data);
 	//	free(arr);
@@ -48,7 +49,7 @@ extern "C" {
 
 	//void _array_expand_internal(array_t *arr, size_t new_size)
 	//{
-	//	if(new_size < arr->capacity) 
+	//	if(new_size < arr->capacity)
 	//		return ;
 	//	{
 	//	size_t max_size = arr->capacity*2;
@@ -65,27 +66,27 @@ extern "C" {
 	//{
 	//	_array_expand_internal(arr, idx);
 
-	//	if(arr->data[idx]) 
+	//	if(arr->data[idx])
 	//		arr->free_fn(arr->data[idx]);
 
 	//	arr->data[idx] = data;
-	//	if(arr->length <= idx) 
+	//	if(arr->length <= idx)
 	//		arr->length = idx + 1;
 	//}
 
 	//DLL_VARIABLE void array_add(array_t *arr, void *data)
 	//{
 	//	_array_expand_internal(arr, arr->length);
-	//	
+	//
 	//	arr->data[arr->length++] = data;
 	//}
 
 	//DLL_VARIABLE void array_remove(array_t *arr, size_t idx)
-	//{  
-	//	if(idx >= arr->length) 
+	//{
+	//	if(idx >= arr->length)
 	//		return;
-	//	
-	//	if(arr->data[idx]) 
+	//
+	//	if(arr->data[idx])
 	//		arr->free_fn(arr->data[idx]);
 
 	//	memmove(arr->data + idx, arr->data + idx + 1, arr->length-idx-1);
@@ -98,7 +99,7 @@ extern "C" {
 	//}
 
 
-	
+
 #define MALLOC_ROUND 4096
 
 int array_nextsize (int elem, int cur, int cnt)

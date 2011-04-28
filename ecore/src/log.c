@@ -1,6 +1,10 @@
 
 #include "ecore_config.h"
-#include "pthread.h"
+#ifdef _MSC_VER
+#include "pthread_windows.h"
+#else
+#include <pthread.h>
+#endif
 #include "internal.h"
 
 
@@ -36,14 +40,14 @@ const char* _get_log_level_name(int level)
 		return "WARN";
 	if(ECORE_LOG_TRACE <= level)
 		return "TRACE";
-	
+
 	return "TRACE";
 }
 
 void*  _log_loop(void* data)
 {
 	char err[ECORE_MAX_ERR_LEN + 4];
-	
+
 #ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
 	log_message_internal_t* internal[100];
 	size_t count = 100;
@@ -53,7 +57,7 @@ void*  _log_loop(void* data)
 	log_message_t* msg;
 #endif
 	ecore_rc rc;
-	
+
 
 	memset(err, 0, sizeof(err));
 
@@ -64,7 +68,7 @@ void*  _log_loop(void* data)
 #ifdef HAS_GETQUEUEDCOMPLETIONSTATUSEX
 		num = 0;
 		rc = _ecore_queue_pop_some(&g_log_queue, (void**)internal, count, &num, 1000, err, ECORE_MAX_ERR_LEN);
-		
+
 		if(ECORE_RC_TIMEOUT == rc)
 			continue;
 
@@ -89,8 +93,8 @@ void*  _log_loop(void* data)
 			internal[num] = 0;
 		}
 #else
-		rc = _ecore_queue_pop(&g_log_queue, &internal, 1000, err, ECORE_MAX_ERR_LEN);
-		
+		rc = _ecore_queue_pop(&g_log_queue, (void**)&internal, 1000, err, ECORE_MAX_ERR_LEN);
+
 		if(ECORE_RC_TIMEOUT == rc)
 			continue;
 
@@ -113,9 +117,19 @@ void*  _log_loop(void* data)
 #endif
 
 	}
+	
+	pthread_exit((void*)0);
 	return 0;
 }
-	
+
+
+DLL_VARIABLE void _ecore_log_finialize()
+{
+	g_log_is_running = 0;
+	pthread_join(g_log_thread, 0);
+	_ecore_queue_finalize(&g_log_queue);
+}
+
 DLL_VARIABLE ecore_rc _ecore_log_init(int level, log_fn_t callback, void* default_context, char* err, size_t len)
 {
 	ecore_rc rc;
@@ -138,17 +152,16 @@ DLL_VARIABLE ecore_rc _ecore_log_init(int level, log_fn_t callback, void* defaul
 
 	ret = pthread_create(&g_log_thread, 0, &_log_loop, 0);
 	if(0 != ret)
+	{
 		snprintf(err, len, "创建线程失败 - [%d]%s", ret, _last_crt_error_with_code(rc));
+		_ecore_queue_finalize(&g_log_queue);
+		return ECORE_RC_ERROR;
+	}
 
+	atexit(&_ecore_log_finialize);
 	return ECORE_RC_OK;
 }
 
-DLL_VARIABLE void _ecore_log_finialize()
-{
-	g_log_is_running = 0;
-	pthread_join(g_log_thread, 0);
-	_ecore_queue_finalize(&g_log_queue);
-}
 
 
 DLL_VARIABLE void ecore_log_message(void* ctxt, int level, const char* message)
@@ -161,7 +174,7 @@ DLL_VARIABLE void ecore_log_vformat(void* ctxt, int level, const char* fmt, va_l
 {
 	char* ptr;
 	int len;
-	
+
     struct tm   tm;
 	struct timeval tv;
 	time_t currnet;
@@ -170,15 +183,17 @@ DLL_VARIABLE void ecore_log_vformat(void* ctxt, int level, const char* fmt, va_l
 	if(level < g_log_level)
 		return;
 
-	
+
 	thread = (ecore_thread_t*)GetFiberData();
-	
+
 	gettimeofday(&tv);
 	currnet = tv.tv_sec;
 #ifndef _WIN32
     localtime_r(&currnet, &tm);
-#else
+#elif defined(_MSC_VER)
     localtime_s(&tm, &currnet);
+#else
+     tm = *localtime(&currnet);
 #endif
 
 	ptr = (char*)my_malloc(ECORE_MAX_ERR_LEN + LOG_PRIFIX + thread->name.len + 4);
@@ -193,7 +208,7 @@ DLL_VARIABLE void ecore_log_vformat(void* ctxt, int level, const char* fmt, va_l
 
 	my_free(ptr);
 	ptr = (char*)my_malloc(len + LOG_PRIFIX + thread->name.len + 4);
-	
+
 	len = vsnprintf(ptr + LOG_PRIFIX + thread->name.len, len+4, fmt, argList);
 	if(len <= 0)
 		goto err;
@@ -207,8 +222,8 @@ successed:
 	log->log.message = ptr;
 	log->log.length = LOG_PRIFIX + thread->name.len + len + 2;
 	log->log.context = (0 == ctxt)?g_log_context:ctxt;
-	
-	
+
+
 	ptr[LOG_PRIFIX + thread->name.len + len] = '\r';
 	ptr[LOG_PRIFIX + thread->name.len + len+1] = '\n';
 	ptr[LOG_PRIFIX + thread->name.len + len+2] = 0;
@@ -224,7 +239,7 @@ successed:
 	, tv.tv_usec / 1000
 	, _get_log_level_name(level)
 	, thread->name.ptr);
-	
+
 	if(len <= 0)
 		goto err;
 
@@ -232,7 +247,7 @@ successed:
 
 	if(ECORE_RC_OK == _ecore_queue_push(&g_log_queue, log, err, ECORE_MAX_ERR_LEN))
 		return;
-	
+
 	my_free(log);
 	}
 err:

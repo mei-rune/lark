@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-	
+
 void _ecore_fire_thread(void* thread)
 {
 	SwitchToFiber(thread);
@@ -40,9 +40,9 @@ DLL_VARIABLE void _ecore_start_thread_internal(ecore_thread_t* data)
 ecore_rc _ecore_queueTask(ecore_t* core, void (*callback_fn)(ecore_t*, void*), void* context, const char* name, size_t name_len, char* err, size_t err_len)
 {
 	ecore_internal_t* internal = (ecore_internal_t*)core->internal;
-	
+
 	ecore_thread_t* data = (ecore_thread_t*)my_calloc(1, sizeof(ecore_thread_t));
-	string_assignLen(&data->name, name, name_len);  
+	string_assignLen(&data->name, name, name_len);
 	data->core = core;
 	data->callback_fn = callback_fn;
 	data->context = context;
@@ -59,7 +59,7 @@ ecore_rc _ecore_queueTask(ecore_t* core, void (*callback_fn)(ecore_t*, void*), v
 		return ECORE_RC_OK;
 	}
 
-	return _ecore_queue_push_task(&core->in, &_ecore_start_thread_internal, data, err, err_len);
+	return _ecore_queue_push_task(&core->in, (void (*)(void*))&_ecore_start_thread_internal, data, err, err_len);
 }
 
 DLL_VARIABLE ecore_rc ecore_queueTask_c(ecore_t* core, void (*callback_fn)(ecore_t*, void*), void* context, const char* name, char* err, size_t err_len)
@@ -78,7 +78,7 @@ DLL_VARIABLE ecore_rc ecore_queueTask(ecore_t* core, void (*callback_fn)(ecore_t
 //	ecore_thread_t* thread = (ecore_thread_t*)handle;
 //	assert(core == thread->core);
 //	thread->join_thread = GetCurrentFiber();
-//	
+//
 //	// 注意这个必须是最后一行
 //	SwitchToFiber(internal->main_thread);
 //}
