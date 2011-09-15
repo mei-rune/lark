@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8E17FF5A-E092-491F-9CCD-214F6FBB8A43}</ProjectGuid>
+    <RootNamespace>libMU</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\include\io;$(ProjectDir)..\include\pr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MU_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Kernel32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBMU_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\pr\array.h" />
+    <ClInclude Include="..\include\pr\hashtable.h" />
+    <ClInclude Include="..\include\pr\itostr.h" />
+    <ClInclude Include="..\include\pr\json_tokener.h" />
+    <ClInclude Include="..\include\pr\link.h" />
+    <ClInclude Include="..\include\pr\object.h" />
+    <ClInclude Include="..\include\pr\os_atomic.h" />
+    <ClInclude Include="..\include\pr\os_dirent.h" />
+    <ClInclude Include="..\include\pr\os_dlfcn.h" />
+    <ClInclude Include="..\include\pr\os_getopt.h" />
+    <ClInclude Include="..\include\pr\os_sem.h" />
+    <ClInclude Include="..\include\pr\os_threads.h" />
+    <ClInclude Include="..\include\pr\os_time.h" />
+    <ClInclude Include="..\include\pr\platform.h" />
+    <ClInclude Include="..\include\pr\rollingfile.h" />
+    <ClInclude Include="..\include\pr\string_buffer.h" />
+    <ClInclude Include="..\include\pr\target.h" />
+    <ClInclude Include="..\include\pr\unittest.h" />
+    <ClInclude Include="..\include\pr\url.h" />
+    <ClInclude Include="..\include\pr\win32\dirent.h" />
+    <ClInclude Include="..\include\pr\win32\dlfcn.h" />
+    <ClInclude Include="..\include\pr\win32\getopt.h" />
+    <ClInclude Include="..\include\pr\win32\pthread_windows.h" />
+    <ClInclude Include="..\include\pr\win32\time.h" />
+    <ClInclude Include="..\include\io\uio.h" />
+    <ClInclude Include="http11\http11_parser.h" />
+    <ClInclude Include="internal.h" />
+    <ClInclude Include="pr\logger_internal.h" />
+    <ClInclude Include="pr\object_private.h" />
+    <ClInclude Include="pr\json\json_private.h" />
+    <ClInclude Include="pr\win32\getopt_int.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pr\atomic.c" />
+    <ClCompile Include="pr\hashtable.c" />
+    <ClCompile Include="pr\itostr.c" />
+    <ClCompile Include="pr\json_tokener.c" />
+    <ClCompile Include="pr\object.c" />
+    <ClCompile Include="pr\object_array.c" />
+    <ClCompile Include="pr\object_string.c" />
+    <ClCompile Include="pr\object_table.c" />
+    <ClCompile Include="pr\object_new.c" />
+    <ClCompile Include="pr\object_to.c" />
+    <ClCompile Include="pr\object_utils.c" />
+    <ClCompile Include="pr\rollingfile.c" />
+    <ClCompile Include="pr\string_buffer.c" />
+    <ClCompile Include="pr\target.c" />
+    <ClCompile Include="pr\unittest.c" />
+    <ClCompile Include="pr\url.c" />
+    <ClCompile Include="pr\utils.c" />
+    <ClCompile Include="pr\json\json.c" />
+    <ClCompile Include="pr\json\json_array.c" />
+    <ClCompile Include="pr\json\json_mapping.c" />
+    <ClCompile Include="pr\json\json_number.c" />
+    <ClCompile Include="pr\json\json_string.c" />
+    <ClCompile Include="pr\win32\dirent.c" />
+    <ClCompile Include="pr\win32\dlfcn.c" />
+    <ClCompile Include="pr\win32\getopt.c" />
+    <ClCompile Include="pr\win32\getopt1.c" />
+    <ClCompile Include="pr\win32\gettimeofday.c" />
+    <ClCompile Include="pr\win32\pthread_windows.c" />
+    <ClCompile Include="pr\win32\sem.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="http11\http11_parser.rl" />
+    <None Include="http11\state_machine.rl" />
+    <None Include="pr\config_parser.rl" />
+    <None Include="pr\json_parser.rl" />
+    <None Include="pr\json\json.rl" />
+    <None Include="pr\json\json_array.rl" />
+    <None Include="pr\json\json_common.rl" />
+    <None Include="pr\json\json_mapping.rl" />
+    <None Include="pr\json\json_number.rl" />
+    <None Include="pr\json\json_string.rl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

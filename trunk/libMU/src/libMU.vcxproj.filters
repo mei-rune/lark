@@ -1,0 +1,263 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{43740c79-ca90-4d1e-b8b4-5601905416bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\pr">
+      <UniqueIdentifier>{c68c8f84-74a0-4b66-9509-95384c5e8fec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\pr\win32">
+      <UniqueIdentifier>{4e12d9f3-847a-4ded-a122-c7d320c7c09c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\io">
+      <UniqueIdentifier>{592ed5df-e5b6-41bc-b037-9f7ee034a7cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{7e5c8487-b50c-4e04-b274-ba61ce654cd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\io">
+      <UniqueIdentifier>{6050372e-61d6-4662-852a-ae63f7d036f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\pr">
+      <UniqueIdentifier>{fef1b751-ebe4-4b08-96e2-94c59102b17e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\pr\json">
+      <UniqueIdentifier>{0ad672d8-8681-4d3d-bddb-bd9b90286a58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\pr\win32">
+      <UniqueIdentifier>{440b5e2f-61e1-47ea-b26d-79347890651e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="http11">
+      <UniqueIdentifier>{70438e65-6f73-43a5-af30-791fd223e725}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\pr\array.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\hashtable.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\itostr.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\json_tokener.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\link.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\object.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_atomic.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_dirent.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_dlfcn.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_getopt.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_sem.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_threads.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\os_time.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\platform.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\rollingfile.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\string_buffer.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\target.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\unittest.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\url.h">
+      <Filter>include\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\win32\dirent.h">
+      <Filter>include\pr\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\win32\dlfcn.h">
+      <Filter>include\pr\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\win32\getopt.h">
+      <Filter>include\pr\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\win32\pthread_windows.h">
+      <Filter>include\pr\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pr\win32\time.h">
+      <Filter>include\pr\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\io\uio.h">
+      <Filter>include\io</Filter>
+    </ClInclude>
+    <ClInclude Include="internal.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="pr\logger_internal.h">
+      <Filter>src\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="pr\object_private.h">
+      <Filter>src\pr</Filter>
+    </ClInclude>
+    <ClInclude Include="pr\json\json_private.h">
+      <Filter>src\pr\json</Filter>
+    </ClInclude>
+    <ClInclude Include="pr\win32\getopt_int.h">
+      <Filter>src\pr\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="http11\http11_parser.h">
+      <Filter>http11</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pr\atomic.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\hashtable.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\itostr.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\json_tokener.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object_array.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object_new.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object_to.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object_utils.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\rollingfile.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\string_buffer.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\target.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\unittest.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\url.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\utils.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\json\json.c">
+      <Filter>src\pr\json</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\json\json_array.c">
+      <Filter>src\pr\json</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\json\json_mapping.c">
+      <Filter>src\pr\json</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\json\json_number.c">
+      <Filter>src\pr\json</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\json\json_string.c">
+      <Filter>src\pr\json</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\dirent.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\dlfcn.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\getopt.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\getopt1.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\gettimeofday.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\pthread_windows.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\win32\sem.c">
+      <Filter>src\pr\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object_table.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+    <ClCompile Include="pr\object_string.c">
+      <Filter>src\pr</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="pr\config_parser.rl">
+      <Filter>src\pr</Filter>
+    </None>
+    <None Include="pr\json_parser.rl">
+      <Filter>src\pr</Filter>
+    </None>
+    <None Include="pr\json\json.rl">
+      <Filter>src\pr\json</Filter>
+    </None>
+    <None Include="pr\json\json_array.rl">
+      <Filter>src\pr\json</Filter>
+    </None>
+    <None Include="pr\json\json_common.rl">
+      <Filter>src\pr\json</Filter>
+    </None>
+    <None Include="pr\json\json_mapping.rl">
+      <Filter>src\pr\json</Filter>
+    </None>
+    <None Include="pr\json\json_number.rl">
+      <Filter>src\pr\json</Filter>
+    </None>
+    <None Include="pr\json\json_string.rl">
+      <Filter>src\pr\json</Filter>
+    </None>
+    <None Include="http11\http11_parser.rl">
+      <Filter>http11</Filter>
+    </None>
+    <None Include="http11\state_machine.rl">
+      <Filter>http11</Filter>
+    </None>
+  </ItemGroup>
+</Project>
