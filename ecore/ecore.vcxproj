@@ -112,7 +112,7 @@
     <ClCompile Include="src\string.c" />
     <ClCompile Include="src\thread.c" />
     <ClCompile Include="src\unittest.c" />
-    <ClCompile Include="src\utility.c" />
+    <ClCompile Include="src\utilities.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

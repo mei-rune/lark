@@ -65,23 +65,12 @@ extern int Test_Flags_Verbose;
     }                                                                   \
   } while (0)
 
-#define CHECK_EQ(val1, val2) CHECK_OP(==, val1, val2)
-#define CHECK_NE(val1, val2) CHECK_OP(!=, val1, val2)
-#define CHECK_LE(val1, val2) CHECK_OP(<=, val1, val2)
-#define CHECK_LT(val1, val2) CHECK_OP(< , val1, val2)
-#define CHECK_GE(val1, val2) CHECK_OP(>=, val1, val2)
-#define CHECK_GT(val1, val2) CHECK_OP(> , val1, val2)
-
-#define EXPECT_EQ(val1, val2) CHECK_EQ(val1, val2)
-#define EXPECT_NE(val1, val2) CHECK_NE(val1, val2)
-#define EXPECT_LE(val1, val2) CHECK_LE(val1, val2)
-#define EXPECT_LT(val1, val2) CHECK_LT(val1, val2)
-#define EXPECT_GE(val1, val2) CHECK_GE(val1, val2)
-#define EXPECT_GT(val1, val2) CHECK_GT(val1, val2)
-
-
-#define ASSERT_TRUE(cond)      CHECK(cond)
-#define ASSERT_FALSE(cond)     CHECK(!(cond))
+#define EXPECT_EQ(val1, val2) CHECK_OP(==, val1, val2)
+#define EXPECT_NE(val1, val2) CHECK_OP(!=, val1, val2)
+#define EXPECT_LE(val1, val2) CHECK_OP(<=, val1, val2)
+#define EXPECT_LT(val1, val2) CHECK_OP(< , val1, val2)
+#define EXPECT_GE(val1, val2) CHECK_OP(>=, val1, val2)
+#define EXPECT_GT(val1, val2) CHECK_OP(> , val1, val2)
 
 #define EXPECT_TRUE(cond)     CHECK(cond)
 #define EXPECT_FALSE(cond)    CHECK(!(cond))
@@ -89,28 +78,8 @@ extern int Test_Flags_Verbose;
 
 #define CHECK_ERR(invocation)  PCHECK((invocation) != -1)
 
-#ifdef NDEBUG
-#define DCHECK_EQ(val1, val2)
-#define DCHECK_NE(val1, val2)
-#define DCHECK_LE(val1, val2)
-#define DCHECK_LT(val1, val2)
-#define DCHECK_GE(val1, val2)
-#define DCHECK_GT(val1, val2)
-#else
-#define DCHECK_EQ(val1, val2)  CHECK_EQ(val1, val2)
-#define DCHECK_NE(val1, val2)  CHECK_NE(val1, val2)
-#define DCHECK_LE(val1, val2)  CHECK_LE(val1, val2)
-#define DCHECK_LT(val1, val2)  CHECK_LT(val1, val2)
-#define DCHECK_GE(val1, val2)  CHECK_GE(val1, val2)
-#define DCHECK_GT(val1, val2)  CHECK_GT(val1, val2)
-#endif
 
-
-#ifdef ERROR
-#undef ERROR      // may conflict with ERROR macro on windows
-#endif
-
-enum LogSeverity {INFO = -1, WARNING = -2, ERROR = -3, FATAL = -4};
+enum LogSeverity {INFO = -1, WARNING = -2, LOG_ERROR = -3, FATAL = -4};
 
 
 

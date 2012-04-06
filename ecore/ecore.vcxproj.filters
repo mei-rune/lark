@@ -83,9 +83,6 @@
     <ClCompile Include="src\unittest.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\utility.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\executor.c">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -111,6 +108,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\pthread_windows.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
